@@ -1,113 +1,71 @@
-import Image from 'next/image'
+import Link from "next/link";
+
+const teamMembers = [
+  { id: 1, name: "김유권", path: "yugwon" },
+  { id: 2, name: "박민형", path: "minhyung" },
+  { id: 3, name: "박지영", path: "jiyoung" },
+  { id: 4, name: "홍석현", path: "seokhyun" },
+];
+
+const weeklyPlans = [
+  { week: 1, plan: "01장: 리액트 개발을 위해 꼭 알아야 할 자바스크립트" },
+  { week: 2, plan: "02장: 리액트 핵심 요소 깊게 살펴보기" },
+  { week: 3, plan: "03장: 리액트 훅 깊게 살펴보기" },
+  { week: 4, plan: "04장: 서버 사이드 렌더링" },
+  { week: 5, plan: "05장: 리액트와 상태 관리 라이브러리" },
+  {
+    week: 6,
+    plan: "06장: 리액트 개발 도구로 디버깅하기 & 07장: 크롬 개발자 도구를 활용한 애플리케이션 분석",
+  },
+  { week: 7, plan: "08장: 좋은 리액트 코드 작성을 위한 환경 구축하기" },
+  { week: 8, plan: "09장: 모던 리액트 개발 도구로 개발 및 배포 환경 구축하기" },
+  { week: 9, plan: "10장: 리액트 17과 18의 변경 사항 살펴보기" },
+  { week: 10, plan: "11장: Next.js 13과 리액트 18" },
+  { week: 11, plan: "12장: 모든 웹 개발자가 관심을 가져야 할 핵심 웹 지표" },
+  { week: 12, plan: "13장: 웹페이지의 성능을 측정하는 다양한 방법" },
+  { week: 13, plan: "14장: 웹사이트 보안을 위한 리액트와 웹페이지 보안 이슈" },
+  { week: 14, plan: "15장: 마치며" },
+];
 
 export default function Home() {
   return (
-    <main className="flex min-h-screen flex-col items-center justify-between p-24">
-      <div className="z-10 max-w-5xl w-full items-center justify-between font-mono text-sm lg:flex">
-        <p className="fixed left-0 top-0 flex w-full justify-center border-b border-gray-300 bg-gradient-to-b from-zinc-200 pb-6 pt-8 backdrop-blur-2xl dark:border-neutral-800 dark:bg-zinc-800/30 dark:from-inherit lg:static lg:w-auto  lg:rounded-xl lg:border lg:bg-gray-200 lg:p-4 lg:dark:bg-zinc-800/30">
-          Get started by editing&nbsp;
-          <code className="font-mono font-bold">app/page.tsx</code>
-        </p>
-        <div className="fixed bottom-0 left-0 flex h-48 w-full items-end justify-center bg-gradient-to-t from-white via-white dark:from-black dark:via-black lg:static lg:h-auto lg:w-auto lg:bg-none">
-          <a
-            className="pointer-events-none flex place-items-center gap-2 p-8 lg:pointer-events-auto lg:p-0"
-            href="https://vercel.com?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+    <div className="container mx-auto p-4">
+      <h1 className="text-3xl font-bold mb-4">모던 리액트 Deep Dive 스터디</h1>
+      <p className="mb-8">
+        리액트의 핵심 개념과 동작 원리부터 Next.js까지, 리액트의 모든 것
+      </p>
+      <h2 className="text-xl font-bold mb-4">주차별 정리</h2>
+      <div className="flex mb-4">
+        {teamMembers.map((member) => (
+          <Link
+            href={member.path}
+            key={member.id}
+            className="mr-4 bg-slate-500 hover:bg-blue-500 text-white font-bold py-4 px-12 rounded"
           >
-            By{' '}
-            <Image
-              src="/vercel.svg"
-              alt="Vercel Logo"
-              className="dark:invert"
-              width={100}
-              height={24}
-              priority
-            />
-          </a>
-        </div>
+            {member.name}
+          </Link>
+        ))}
       </div>
 
-      <div className="relative flex place-items-center before:absolute before:h-[300px] before:w-[480px] before:-translate-x-1/2 before:rounded-full before:bg-gradient-radial before:from-white before:to-transparent before:blur-2xl before:content-[''] after:absolute after:-z-20 after:h-[180px] after:w-[240px] after:translate-x-1/3 after:bg-gradient-conic after:from-sky-200 after:via-blue-200 after:blur-2xl after:content-[''] before:dark:bg-gradient-to-br before:dark:from-transparent before:dark:to-blue-700 before:dark:opacity-10 after:dark:from-sky-900 after:dark:via-[#0141ff] after:dark:opacity-40 before:lg:h-[360px] z-[-1]">
-        <Image
-          className="relative dark:drop-shadow-[0_0_0.3rem_#ffffff70] dark:invert"
-          src="/next.svg"
-          alt="Next.js Logo"
-          width={180}
-          height={37}
-          priority
-        />
+      <div className="mt-12">
+        <h2 className="text-xl font-bold mb-4">주차별 계획</h2>
+        <table className="table-auto">
+          <thead>
+            <tr>
+              <th className="px-4 py-2">주차</th>
+              <th className="px-4 py-2">계획</th>
+            </tr>
+          </thead>
+          <tbody>
+            {weeklyPlans.map((plan) => (
+              <tr key={plan.week}>
+                <td className="border px-4 py-2 text-center">{plan.week}</td>
+                <td className="border px-4 py-2 text-sm">{plan.plan}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
-
-      <div className="mb-32 grid text-center lg:max-w-5xl lg:w-full lg:mb-0 lg:grid-cols-4 lg:text-left">
-        <a
-          href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Docs{' '}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Find in-depth information about Next.js features and API.
-          </p>
-        </a>
-
-        <a
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Learn{' '}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Learn about Next.js in an interactive course with&nbsp;quizzes!
-          </p>
-        </a>
-
-        <a
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Templates{' '}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Explore the Next.js 13 playground.
-          </p>
-        </a>
-
-        <a
-          href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Deploy{' '}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Instantly deploy your Next.js site to a shareable URL with Vercel.
-          </p>
-        </a>
-      </div>
-    </main>
-  )
+    </div>
+  );
 }
