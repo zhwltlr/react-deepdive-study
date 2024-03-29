@@ -2,7 +2,8 @@ This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next
 
 ## Getting Started
 
-First, run the development server:
+- 레포지토리 clone 후 `npm install` 진행
+- branch는 본인 이름으로 생성하시면 됩니다.
 
 ```bash
 npm run dev
@@ -16,21 +17,17 @@ bun dev
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
-
-This project uses [`next/font`](https://nextjs.org/docs/basic-features/font-optimization) to automatically optimize and load Inter, a custom Google Font.
+- 매주 목요일 자정(00:00)까지 정리한 내용 본인 이름의 브랜치에 push 한 후 스터디 종료 시 merge 합니다.
 
 ## Learn More
 
-To learn more about Next.js, take a look at the following resources:
+- 프로젝트의 루트에 생성되어 있는 본인 이름의 디렉토리로 이동합니다.
+- 각 장의 해당하는 이름으로 `mdx` 파일을 만들어 줍니다. (ex. chap1.mdx)
+- markdown 형식으로 정리한 내용을 기입합니다.
+- 이미지를 삽입하고 싶은 경우 `public/assets/본인이름` 디렉토리를 생성하여 이미지를 불러오시면 됩니다.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js/) - your feedback and contributions are welcome!
+  ```
+  ![Test img](/assets/이름/testimg.jpg)
+  ```
 
 ## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/deployment) for more details.
