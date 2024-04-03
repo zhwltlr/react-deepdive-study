@@ -94,12 +94,198 @@ hello1 === hello2 // false
   따라서 함수 선언식을 사용하는것이 좋다.
 
 - 화살표 함수
+
   - this 바인딩을 하지 않는다.
   - arguments 객체를 생성하지 않는다.
+
+  ```
+  const hello = () => {
+    console.log(arguments)
+  }
+  hello(1,2,3) // error
+  ```
+
   - new 연산자로 호출할 수 없다.
   - prototype 프로퍼티가 없다.
   - constructor 프로퍼티가 없다.
 
-```
+- this
+
+  - 자신이 속한 객체나 자신이 생성할 인스턴스를 가리키는 값이다.
+  - 함수가 호출될 때 결정된다.
+  - 함수를 호출하는 방법에 따라 this에 바인딩될 값이 달라진다.
+  - 함수가 일반 함수로 호출되면 this는 전역 객체에 바인딩된다.
+  - 화살표 함수 내부에서 this를 참조하면 상위 스코프의 this를 그대로 참조한다.
+
+- 화살표 함수와 일반 함수 내에서의 this 바인딩 차이
+
+  - 화살표 함수 내에서의 this 바인딩은 상위 스코프의 this를 그대로 참조한다.
+  - 일반 함수 내에서의 this 바인딩은 함수를 호출한 객체에 바인딩된다.
+  - 화살표 함수가 단순 일반함수의 축약형이라고 생각하면 안된다.
+
+- 즉시 실행 함수
+
+  - 함수를 선언하자마자 즉시 실행되는 함수
+
+  ```
+  ((a,b)=>{return a+b},)(10,24) //34
+  ```
+
+  - 재호출이 불가하다.
+  - 독립적인 스코프를 가진다.
+  - 전역 스코프의 오염을 막을 수 있다.
+  - 리팩토링에 도움이된다 읽는 사람이 함수가 한번만 호출된다는것을 알 수 있다.
+
+- 고차 함수
+
+  ```
+  const doubledArray = [1,2,3].map((item)=>item*2)
+  doubledArray // [2,4,6]
+
+  const add = function(a){
+    return function(b){
+      return a+b
+    }
+  }
+
+  add(1)(2) // 3
+  ```
+
+  - 함수를 인자로 받거나 함수를 반환하는 함수 생성 가능
+  - 고차 함수 컴포넌트를 만들면 컴포넌트 내부에서 공통으로 관리되는 로직을 분리해 관리할수있다.
+
+- 함수의 부수 효과를 최대한 억제하는것이 좋다.
+
+  - 부수효과 : 함수 내부에서 함수 외부의 상태를 변경하는것
+  - 부수효과를 최대한 억제하면 함수의 의존성이 줄어들어 테스트와 유지보수가 쉬워진다.
+
+- 함수는 가능한 작게 만들어내기
+
+  - 함수는 한 가지 일만 해야한다.
+  - 함수가 한 가지 이상의 일을 하게되면 함수를 재사용하기 어려워진다.
+
+- 함수이름 함수가 어떤일을 하는지 알기쉽게 작성
+
+- 클래스
+
+  - 특정한 형태의 객체를 반복적으로 만들기 위해 사용되는 것이 바로 클래스다.
+
+  ```
+  class Car{
+
+    // constructor는 생성자이며 유일하다
+    constructor(name){
+      //값을 받으면 프로퍼티에 할당
+      this.name = name
+      }
+
+  honk(){
+    console.log(`${this.name} is honking`)
+    }
+
+  static hello(){
+    console.log('저는 자동차입니다.')
+    }
+
+  set age(value){
+    this.carAge = value
+  }
+
+  get age(){
+    return this.carAge
+  }
+
+  const myCar = new Car('자동차') // 프로퍼티 값이 할당된다.
+
+  myCar.honk()
+
+  Car.hello()
+
+  myCar.hello()
+
+  myCar.age = 32
+
+  console.log(myCar.age, myCar.carAge)}
+
+  ```
+
+- getter, setter는 프로퍼티에 접근할때 사용되는 메서드이다.
+  - get을 앞에 붙여야하고 뒤이어 getter의 이름을 붙인다.
 
 ```
+  class Car{
+
+
+    constructor(name){
+
+      this.name = name
+      }
+
+get firstCharacter(){
+  return this.name[0]
+
+  }
+}
+  const myCar = new Car('자동차')
+
+  myCar.firstCharacter // '자'
+
+```
+
+- setter는 get과 마찬가지로 set을 붙여야하고 뒤이어 setter의 이름을 붙인다.
+  - setter는 값을 할당할때 사용된다.
+
+```
+
+class Car{
+
+
+    constructor(name){
+
+      this.name = name
+      }
+
+get firstCharacter(){
+  return this.name[0]
+
+  }
+}
+  const myCar = new Car('자동차')
+
+  myCar.firstCharacter // '자'
+
+  myCar.firstCharacter = '차'
+
+  console.log(myCar.firstCharacter, myCar.name) // '차', '차동차'
+
+```
+
+- 인스턴스 메서드와 정적 메서드
+
+  - 인스턴스 메서드 : 인스턴스를 통해 호출하는 메서드
+    - 프로토타입 확인하기
+    ```
+    object.getPrototypeOf(myCar)=== Car.prototype // Car
+
+    myCar.__proto__ === Car.prototype // true
+    ```
+    - __proto__는 호환성을 유지하기위해서만 존재 사용하지않는것이 바람직함.
+
+  - 정적 메서드 : 클래스를 통해 호출하는 메서드
+    - 인스턴스를 통해 호출할 수 없다.
+    - 클래스 내부에서 this를 사용할 수 없다.
+    - 인스턴스를 생성하지 않아도 사용할 수 있다.
+    - 생성하지 않아도 접근이 가능하다.
+    - 여러곳에서 재사용이 가능하다.
+    - 유틸리티 함수를 만들때 자주 활용된다.
+
+- 클래스 상속
+  - 클래스 상속은 부모 클래스의 프로퍼티와 메서드를 자식 클래스에서 사용할 수 있게 해준다.
+  - extends 키워드를 사용하여 상속을 구현한다.
+  - super 키워드를 사용하여 부모 클래스의 생성자를 호출한다.
+  - super 키워드를 사용하여 부모 클래스의 메서드를 호출한다.
+  - 자식 클래스에서 constructor를 구현할 때 super를 호출하지 않으면 에러가 발생한다.
+
+- 클래스는 ES6에서 등장한 개념이다.
+  - ES6이전에는 프로토타입을 활용해 클래스의 작동 방식을 동일하게 구현했다.
+
