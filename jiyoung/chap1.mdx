@@ -38,7 +38,6 @@ description: 리액트 개발을 위해 꼭 알아야 할 자바스크립트
    ```bash
    let greeting = "Hello, World!";
    let name = 'jyp';
-
    ```
 
 3. 불리언(Boolean): true or false 값을 가짐
@@ -46,7 +45,6 @@ description: 리액트 개발을 위해 꼭 알아야 할 자바스크립트
    ```bash
    let isTrue = true;
    let isFalse = false;
-
    ```
 
 4. undefined: 변수가 선언되었지만 값이 할당되지 않은 상태를 나타낸다
@@ -113,13 +111,281 @@ description: 리액트 개발을 위해 꼭 알아야 할 자바스크립트
   greet("jyp"); // 출력: Hello, jyp!
   ```
 
-- 날짜(Date): 날짜와 시간 정보를 나타냄
+### 값을 저장하는 방식의 차이
 
-  ```bash
-  let currentDate = new Date();
-  console.log(currentDate); // 현재 날짜와 시간 출력
+- 원시 타입과 객체 타입의 가장 큰 차이점은 변수에 저장될 때 값이 저장되는 방식이다.
+- 원시타입
+  ```
+  let hello = "hello";
+  let hi = hello;
+  console.log(hello === hi); // true
+  ```
+- 객체타입
+  ```
+  var hello = {
+    greet : "hello, world"
+  }
+  var hi = {
+    greet : "hello, world"
+  }
+  console.log(hello === hi); // false
+  ```
+  - 객체는 값을 저장하는 것이 아니라 참조를 저장하므로, 두 객체는 서로 다른 메모리 주소를 참조하므로 false가 출력된다.
+
+### Object.is
+
+- `==` vs `Object.is` : `==`는 동등 비교 연산자로, 같음을 비교하기 전에 양쪽이 같은 타입이 아니라면 비교할 수 있도록 강제로 형변환을 한 후에 비교한다.
+
+  ```
+  console.log(0 === -0); // true
+  console.log(Object.is(0, -0)); // false
+
+  console.log(NaN === NaN); // false
+  console.log(Object.is(NaN, NaN)); // true
   ```
 
-- 데이터 타입은 변수를 다루는 중요한 개념으로, 올바른 데이터 타입을 선택하는 것이 어떻게 보면 기본 중에 기본이라고 할 수 있다.
+  - `Object.is`는 `NaN`과 `+0`, `-0`을 구별하므로, `NaN`과 `NaN`은 같다고 판단한다.
+  - **_객체 비교는 별 차이가 없다._**
 
-### 값을 저장하는 방식의 차이
+### 리액트에서의 동등 비교
+
+<details>
+  <summary>React ObjectIs</summary>
+  ```bash
+  function is(x: any, y: any) {
+    return (
+      (x === y && (x !== 0 || 1 / x === 1 / y)) || (x !== x && y !== y) // eslint-disable-line no-self-compare
+    );
+  }
+  const objectIs: (x: any, y: any) => boolean =
+    typeof Object.is === 'function' ? Object.is : is;
+  export default objectIs;
+  ```
+</details>
+
+<details>
+  <summary>shallowEqual</summary>
+  ```bash
+  import is from './objectIs';
+  import hasOwnProperty from './hasOwnProperty';
+  function shallowEqual(objA: mixed, objB: mixed): boolean {
+    if (is(objA, objB)) {
+      return true;
+    }
+  if (
+    typeof objA !== 'object' ||
+    objA === null ||
+    typeof objB !== 'object' ||
+    objB === null
+  ) {
+    return false;
+  }
+  const keysA = Object.keys(objA);
+  const keysB = Object.keys(objB);
+  if (keysA.length !== keysB.length) {
+    return false;
+  }
+  for (let i = 0; i < keysA.length; i++) {
+    const currentKey = keysA[i];
+  if (
+    !hasOwnProperty.call(objB, currentKey) ||
+    // $FlowFixMe[incompatible-use] lost refinement of `objB`
+    !is(objA[currentKey], objB[currentKey])
+  ) {
+      return false;
+    }
+  }
+  return true;
+  }
+  export default shallowEqual;
+  ```
+
+</details>
+
+- Object.is로 먼저 비교를 하고, 객체 간 얕은 비교를 한 번 더 수행한다.
+- 객체의 경우, 얕은 비교를 수행하므로, 객체 내부의 객체까지 비교하지는 않는다.
+- React는 props만 일차적으로 비교하면 되기 때문에 얕은 비교를 수행한다.
+
+```jsx
+type Props = { hello: string };
+function HelloComponent(props: Props) {
+  return <div>{props.hello}</div>;
+}
+function App() {
+  return <HelloComponent hello="hi" />;
+}
+```
+
+- 리액트는 props에서 꺼내온 값을 기준으로 렌더링을 수행하기 때문에 얕은 비교로도 충분하다.
+
+## 함수
+
+### 함수란 무엇인가?
+
+- 자바스크립트에서 함수란, 일련의 과정을 문(statement)으로 구현하고 코드 블록으로 감싸서 하나의 실행 단위로 정의한 것이다.
+- 리액트에서의 함수
+  ```jsx
+  function Component(props) {
+    return <div>{props.hello}<div>;
+  }
+  ```
+  - 일반적인 함수와의 차이점 : 함수 컴포넌트는 `<Component hello={props.hello} />`와 같이 단일 porps 객체를 인자로 받거나, `<Component {...props} />` 같은 형태로 모든 props를 받을 수 있다.
+
+### 함수를 정의하는 4가지 방법
+
+1. 함수 선언문 (Function Declaration)
+   ```bash
+   function add(x, y) {
+     return x + y;
+   }
+   ```
+2. 함수 표현식 (Function Expression)
+
+- 일급 객체 : 다른 객체들에 일반적으로 적용 가능한 연산을 모두 지원하는 객체로, 함수를 변수에 할당하거나, 함수의 인자로 전달하거나, 함수에서 반환할 수 있다.
+
+```bash
+ const add = function(x, y) {
+    return x + y
+ };
+```
+
+**함수 표현식과 선언식의 차이**
+
+- 호이스팅 여부
+  - 함수 선언식 : 함수의 호이스팅은 함수에 대한 선언을 실행 전에 미리 메모리에 등록
+  - 함수 표현식 : 함수를 변수에 할당했다. 변수는 런타임 이전에 undefined로 초기화 되고, 런타임 시점에 함수가 할당되어 작동한다.
+
+3. Function 생성자 함수 (Function Constructor)
+
+   ```bash
+    const add = new Function('x','y','return x + y');
+   ```
+
+4. 화살표 함수 (Arrow Function)
+   ```bash
+    const add = (x, y) => x + y;
+   ```
+
+- 기존 함수 생성 방식과의 차이점
+  - 화살표 함수는 생성자로 사용할 수 없다.
+  - 화살표 함수는 arguments가 존재하지 않는다.
+  - 화살표 함수의 this는 상위 스코프의 this를 가리킨다.
+    - this : 자신이 속한 객체 또는 자신이 생성할 인스턴스를 가리키는 자기 참조 변수
+
+### 다양한 함수
+
+#### 즉시 실행 함수
+
+- 함수를 정의함과 동시에 실행하는 함수로, 한 번 사용하고 다시 사용하지 않을 때 사용함으로써 전역 스코프의 오염을 막을 수 있다.
+
+  ```bash
+  (function() {
+    console.log('즉시 실행 함수');
+  })();
+  ```
+
+  #### 고차 함수
+
+- 함수를 인자로 받거나 함수를 반환하는 함수로, 이와 유사하게 고차함수 컴포넌트를 만들면 컴포넌트 내부에서 공통으로 관리되는 로직을 분리해 관리할 수 있다.
+  ```bash
+  function add(x) {
+    return function(y) {
+      return x + y;
+    };
+  }
+  add(1)(3) // 4
+  ```
+
+### 주의 사항
+
+#### 함수의 부수 효과를 최대한 억제하라
+
+- 부수 효과 : 함수 내부에서 함수 외부의 상태를 변경하는 것
+
+#### 가능한 한 함수를 작게 만들어라
+
+#### 누구나 이해할 수 있는 이름을 붙여라
+
+## 클래스
+
+### 클래스란 무엇인가?
+
+- 특정한 객체를 만들기 위한 일종의 템플릿
+
+```bash
+class Car{
+  // 생성자 : 객체를 생성하는 특수한 메서드
+  // 단 하나만 존재할 수 있다.
+  constructor(name){
+    // 프로퍼티 : 내부에 정의할 수 있는 속성값
+    this.name = name;
+  }
+
+  // 메서드 : 클래스 내부에서 선언한 메서드
+  // 새롭게 생성한 객체에서 인스턴스 메서드에 접근할 수 있다.
+  hook(){
+    console.log(`${this.name} 이 경적을 울린다.`);
+  }
+
+  // 정적 메서드 : 클래스의 인스턴스가 아닌 이름으로 호출할 수 있는 메서드다.
+  // 객체를 생성하지 않아도 여러 곳에서 재사용 할 수 있기 때문에 전역에서 사용하는 유틸함수를 정적 메서드로 많이 활용하는 편이다.
+  static hello(){
+    console.log('나는 자동차');
+  }
+
+  // setter : 프로퍼티 값을 설정할 때 사용
+  set age(value){
+    this.carAge = value;
+  }
+
+  // getter : 프로퍼티 값을 읽을 때 사용
+  get age(){
+    return this.carAge;
+  }
+}
+
+const myCar = new Car('자동차');
+myCar.hook(); // 자동차 이 경적을 울린다.
+Car.hello(); // 나는 자동차
+myCar.age = 10;
+console.log(myCar.age); // 10
+```
+
+#### 클래스 상속
+
+```
+class Truck extends Car{
+  constructor(name, weight){
+    super(name);
+    this.weight = weight;
+  }
+
+  load(){
+    console.log(`${this.name} 이 ${this.weight}kg 물건을 실었다.`);
+  }
+}
+```
+
+## 클로저
+
+### 클로저의 정의
+
+- 클로저는 함수와 그 함수가 선언될 당시의 렉시컬 환경과의 조합이다.
+
+```
+function add(){
+  const a = 10;
+  function innerAdd(){
+    const b = 20;
+    console.log(a + b);
+  }
+  innerAdd() // 30
+}
+
+add();
+```
+
+- a 변수의 유효 범위는 add 전체이고, b의 유효 범위는 innerAdd 함수 내부이다.
+- innerAdd 함수는 add 함수 내부에서 선언되었기 때문에 add 함수의 렉시컬 환경을 기억하고 있다. 따라서 innerAdd 함수는 add 함수의 변수에 접근할 수 있다.
+- _선언된 어휘적 환경_ 은, 변수가 코드 내부에서 어디에 선언되었는지에 따라 결정된다.
+- 클로저는 이러한 어휘적 환경을 조합해 코딩하는 기법이다.
