@@ -21,8 +21,6 @@ description: 리액트 개발을 위해 꼭 알아야 할 자바스크립트
 
 - C나 Java의 경우, 정수와 실수를 구분하여 int, long, float, double 등과 같은 다양한 숫자 타입이 존재한다. 하지만 자바스크립트는 독특하게 하나의 숫자 타입만 존재한다.
 
-- ECMAScript 표준에 따르면, 숫자 타입의 값은 배정밀도 64비트 부동소수점 형(double-precision 64-bit floating-point format : -(253 -1) 와 253 -1 사이의 숫자값)을 따른다. 즉, 모든 수를 실수를 처리하며 정수만을 표현하기 위한 특별한 데이터 타입(integer type)은 없다.
-
 - 자바스크립트의 숫자 타입은 정수만을 위한 타입이 없고 모든 수를 실수를 처리한다. 정수로 표시된다해도 사실은 실수다. 따라서 정수로 표시되는 수 끼리 나누더라도 실수가 나올 수 있다.
 
   ```bash
@@ -40,7 +38,7 @@ description: 리액트 개발을 위해 꼭 알아야 할 자바스크립트
    let name = 'jyp';
    ```
 
-3. 불리언(Boolean): true or false 값을 가짐
+3. 불리언(Boolean): true or false 값을 가진다
 
    ```bash
    let isTrue = true;
@@ -53,15 +51,13 @@ description: 리액트 개발을 위해 꼭 알아야 할 자바스크립트
    let variableWithoutValue;
    ```
 
-5. null: 값이 비어있거나 존재하지 않음을 나타냄
+5. null: 값이 비어있거나 존재하지 않음을 나타낸다
 
    ```bash
    let emptyValue = null;
    ```
 
 - 변수가 기억하는 메모리 어드레스의 참조 정보를 제거하는 것을 의미하며 자바스크립트 엔진은 누구도 참조하지 않는 메모리 영역에 대해 가비지 콜렉션을 수행할 것이다.
-
-​
 
 6. 심볼(Symbol): ES6부터 추가된 데이터 타입으로, 고유하고 변경 불가능한 값을 나타냄
 
@@ -206,15 +202,15 @@ description: 리액트 개발을 위해 꼭 알아야 할 자바스크립트
 - 객체의 경우, 얕은 비교를 수행하므로, 객체 내부의 객체까지 비교하지는 않는다.
 - React는 props만 일차적으로 비교하면 되기 때문에 얕은 비교를 수행한다.
 
-```jsx
-type Props = { hello: string };
-function HelloComponent(props: Props) {
-  return <div>{props.hello}</div>;
-}
-function App() {
-  return <HelloComponent hello="hi" />;
-}
-```
+  ```jsx
+  type Props = { hello: string };
+  function HelloComponent(props: Props) {
+    return <div>{props.hello}</div>;
+  }
+  function App() {
+    return <HelloComponent hello="hi" />;
+  }
+  ```
 
 - 리액트는 props에서 꺼내온 값을 기준으로 렌더링을 수행하기 때문에 얕은 비교로도 충분하다.
 
@@ -243,11 +239,11 @@ function App() {
 
 - 일급 객체 : 다른 객체들에 일반적으로 적용 가능한 연산을 모두 지원하는 객체로, 함수를 변수에 할당하거나, 함수의 인자로 전달하거나, 함수에서 반환할 수 있다.
 
-```bash
- const add = function(x, y) {
-    return x + y
- };
-```
+  ```bash
+  const add = function(x, y) {
+      return x + y
+  };
+  ```
 
 **함수 표현식과 선언식의 차이**
 
@@ -269,6 +265,7 @@ function App() {
 - 기존 함수 생성 방식과의 차이점
   - 화살표 함수는 생성자로 사용할 수 없다.
   - 화살표 함수는 arguments가 존재하지 않는다.
+    - arguments : 함수 내부에서 사용할 수 있는 지역 변수로, 함수 호출 시 전달된 인자들의 정보를 담고 있는 객체이다. [참고](https://fromnowwon.tistory.com/entry/arguments)
   - 화살표 함수의 this는 상위 스코프의 this를 가리킨다.
     - this : 자신이 속한 객체 또는 자신이 생성할 인스턴스를 가리키는 자기 참조 변수
 
@@ -305,6 +302,8 @@ function App() {
 #### 가능한 한 함수를 작게 만들어라
 
 #### 누구나 이해할 수 있는 이름을 붙여라
+
+---
 
 ## 클래스
 
@@ -356,10 +355,12 @@ console.log(myCar.age); // 10
 ```
 class Truck extends Car{
   constructor(name, weight){
+    // super : 부모 클래스의 생성자를 호출하는 키워드
     super(name);
     this.weight = weight;
   }
 
+  // 메서드 오버라이딩 : 부모 클래스의 메서드를 자식 클래스에서 재정의하는 것
   load(){
     console.log(`${this.name} 이 ${this.weight}kg 물건을 실었다.`);
   }
@@ -370,20 +371,20 @@ class Truck extends Car{
 
 ### 클로저의 정의
 
-- 클로저는 함수와 그 함수가 선언될 당시의 렉시컬 환경과의 조합이다.
+- 클로저는 함수와 그 함수가 선언될 당시의 **_렉시컬 환경과의 조합_**이다.
 
-```
-function add(){
-  const a = 10;
-  function innerAdd(){
-    const b = 20;
-    console.log(a + b);
+  ```
+  function add(){
+    const a = 10;
+    function innerAdd(){
+      const b = 20;
+      console.log(a + b);
+    }
+    innerAdd() // 30
   }
-  innerAdd() // 30
-}
 
-add();
-```
+  add();
+  ```
 
 - a 변수의 유효 범위는 add 전체이고, b의 유효 범위는 innerAdd 함수 내부이다.
 - innerAdd 함수는 add 함수 내부에서 선언되었기 때문에 add 함수의 렉시컬 환경을 기억하고 있다. 따라서 innerAdd 함수는 add 함수의 변수에 접근할 수 있다.
@@ -400,6 +401,7 @@ add();
 #### 함수 스코프
 
 - 함수 내부에 선언한 것
+- 자바스크립트는 함수 스코프를 따르기 때문에 함수 내부에서 선언된 변수는 함수 내부에서만 접근 가능하다.
   ```bash
   function hello(){
     var local = 'local variable';
@@ -468,6 +470,8 @@ function Component() {
   ```
   - heavyJobWithClosure 함수가 실행될 때 생성된 longArr 배열을 메모리에 두고 있다.
 
+---
+
 ## 이벤트 루프와 비동기 통신의 이해
 
 ### 싱글 스레드 자바스크립트
@@ -500,20 +504,20 @@ function Component() {
   - foo 함수가 호출되면 호출 스택에 foo 함수가 쌓이고, bar 함수가 호출되면 호출 스택에 bar 함수가 쌓인다. 이후 baz 함수가 호출되면 호출 스택에 baz 함수가 쌓인다. baz 함수가 실행되면 호출 스택에서 baz 함수가 제거되고, bar 함수가 실행되면 호출 스택에서 bar 함수가 제거된다. 마지막으로 foo 함수가 실행되면 호출 스택에서 foo 함수가 제거된다.
   - 이벤트 루프 : 이 호출 스택이 비어 있는지 여부를 확인하는 것
 
-  ```bash
-  function bar(){
-    console.log('bar');
-  }
-  function baz(){
-    console.log('baz');
-  }
-  function foo(){
-    console.log('foo');
-    setTimeout(bar(),0)
-    baz();
-  }
-  foo();
-  ```
+    ```bash
+    function bar(){
+      console.log('bar');
+    }
+    function baz(){
+      console.log('baz');
+    }
+    function foo(){
+      console.log('foo');
+      setTimeout(bar(),0) // 변경
+      baz();
+    }
+    foo();
+    ```
 
   - setTimeout 함수는 비동기 함수로, 두 번째 인자로 전달된 시간이 지나면 콜백 함수를 호출한다. 이때, 콜백 함수는 호출 스택이 아닌 태스크 큐에 들어간다.
   - 태스크 큐 : 실행해야 할 테스크의 집합
@@ -534,53 +538,53 @@ function Component() {
 
 - 구조 분해 할당은 객체나 배열을 해체하여 그 값을 개별 변수에 담을 수 있게 하는 자바스크립트 표현식이다.
 
-```
-const array = [1, 2, 3];
-const [a, ...rest] = array;
-console.log(a); // 1
-console.log(rest); // [2, 3]
-```
+  ```
+  const array = [1, 2, 3];
+  const [a, ...rest] = array;
+  console.log(a); // 1
+  console.log(rest); // [2, 3]
+  ```
 
-```
-const object = {
-  a: 1,
-  b: 2,
-  c: 3
-}
-const {a, ...rest} = object;
-console.log(a); // 1
-console.log(rest); // {b: 2, c: 3}
-```
+  ```
+  const object = {
+    a: 1,
+    b: 2,
+    c: 3
+  }
+  const {a, ...rest} = object;
+  console.log(a); // 1
+  console.log(rest); // {b: 2, c: 3}
+  ```
 
 ### 전개 구문
 
 - 전개 구문은 배열이나 객체를 확장하거나 병합할 때 사용한다.
 
-```bash
-const array = [1, 2, 3];
-const newArray = [...array, 4, 5];
-console.log(newArray); // [1, 2, 3, 4, 5]
+  ```bash
+  const array = [1, 2, 3];
+  const newArray = [...array, 4, 5];
+  console.log(newArray); // [1, 2, 3, 4, 5]
 
-const object = {
-  a: 1,
-  b: 2,
-  c: 3
-}
-const newObject = {...object, d: 4, e: 5};
-console.log(newObject); // {a: 1, b: 2, c: 3, d: 4, e: 5}
-```
+  const object = {
+    a: 1,
+    b: 2,
+    c: 3
+  }
+  const newObject = {...object, d: 4, e: 5};
+  console.log(newObject); // {a: 1, b: 2, c: 3, d: 4, e: 5}
+  ```
 
 ### 객체 초기자
 
 - 객체 초기자는 객체를 생성할 때 변수 이름과 동일한 속성을 초기화할 때 사용한다.
 
-```bash
-const a = 1;
-const b = 2;
-const c = 3;
-const object = {a, b, c};
-console.log(object); // {a: 1, b: 2, c: 3}
-```
+  ```bash
+  const a = 1;
+  const b = 2;
+  const c = 3;
+  const object = {a, b, c};
+  console.log(object); // {a: 1, b: 2, c: 3}
+  ```
 
 ### Array 프로토타입의 메서드 : map, filter, reduce, forEach
 
@@ -589,10 +593,10 @@ console.log(object); // {a: 1, b: 2, c: 3}
 - map 메서드는 배열 내의 모든 요소에 대해 주어진 함수를 호출한 결과를 모아 새로운 배열을 반환한다.
 - 리액트에서는 주로 특정 배열을 기반으로 어떠한 리액트 요소를 반환하고자 할때 많이 사용된다.
 
-```bash
-const array = [1, 2, 3];
-const Elements = arr.map((item)=>{return <div>{item}</div>});
-```
+  ```bash
+  const array = [1, 2, 3];
+  const Elements = arr.map((item)=>{return <div>{item}</div>});
+  ```
 
 #### filter
 
@@ -602,11 +606,11 @@ const Elements = arr.map((item)=>{return <div>{item}</div>});
 
 - reduce 메서드는 배열의 각 요소에 대해 주어진 리듀서 함수를 실행하고, 하나의 결과값을 반환한다.
 
-```bash
-const array = [1, 2, 3];
-const sum = array.reduce((acc, cur) => acc + cur, 0);
-console.log(sum); // 6
-```
+  ```bash
+  const array = [1, 2, 3];
+  const sum = array.reduce((acc, cur) => acc + cur, 0);
+  console.log(sum); // 6
+  ```
 
 #### forEach
 
@@ -618,15 +622,15 @@ console.log(sum); // 6
 - 삼항 조건 연산자는 조건에 따라 값을 반환하는 연산자이다.
 - 리액트에서는 주로 조건부 렌더링을 할 때 많이 사용된다.
 
-```bash
-function Component({condition}){
-  return (
-    <div>
-      {condition ? <div>참</div> : <div>거짓</div>}
-    </div>
-  )
-}
-```
+  ```bash
+  function Component({condition}){
+    return (
+      <div>
+        {condition ? <div>참</div> : <div>거짓</div>}
+      </div>
+    )
+  }
+  ```
 
 - 중첩은 피하는 것이 좋다.
 
@@ -643,16 +647,16 @@ function Component({condition}){
 
 - any는 모든 타입을 허용하는 타입이다. 하지만 unknown은 모든 타입을 허용하지만, 타입을 정의하지 않은 상태에서는 사용할 수 없다.
 
-```bash
-function doSomething(callback: unknown){
-  if(typeof callback === 'function'){
-    callback();
-    return;
-  }
+  ```bash
+  function doSomething(callback: unknown){
+    if(typeof callback === 'function'){
+      callback();
+      return;
+    }
 
-  throw new Error('callback is not a function');
-}
-```
+    throw new Error('callback is not a function');
+  }
+  ```
 
 - never 타입은 절대 발생하지 않는 값의 타입을 나타낸다.
 
@@ -669,7 +673,7 @@ function doSomething(callback: unknown){
     }
   }
   ```
-- typeof 연산자 : 변수의 타입을 확인하는 연산자
+- `typeof` : 변수의 타입을 확인하는 연산자
   ```bash
   function doSomething(value: string | number){
     if(typeof value === 'string'){
@@ -679,7 +683,7 @@ function doSomething(callback: unknown){
     }
   }
   ```
-- in 연산자 : 객체의 속성이 존재하는지 확인하는 연산자
+- `in` : 객체의 속성이 존재하는지 확인하는 연산자
   ```bash
   interface Student{
     age: number;
@@ -703,7 +707,8 @@ function doSomething(callback: unknown){
 - 함수나 클래스를 정의할 때 타입을 명시하지 않고, 타입을 파라미터로 받아 사용할 수 있다.
   ```
   function Component(){
-    const [state, setState] = useState<string>(''); // useState의 제네릭 타입으로 string을 전달
+    // useState의 제네릭 타입으로 string을 전달
+    const [state, setState] = useState<string>('');
   }
   ```
 
