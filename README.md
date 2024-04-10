@@ -17,7 +17,7 @@ bun dev
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
-- 매주 목요일 자정(00:00)까지 정리한 내용 본인 이름의 브랜치에 push 한 후 스터디 종료 시 merge 합니다.
+- 매주 목요일 스터디 전까지 정리한 내용 본인 이름의 브랜치에 push 한 후 스터디 종료 시 merge 합니다.
 
 ## Learn More
 
@@ -31,3 +31,5 @@ Open [http://localhost:3000](http://localhost:3000) with your browser to see the
   ```
 
 ## Deploy on Vercel
+
+[react-deepdive-study](https://react-deepdive-study-gray.vercel.app/)

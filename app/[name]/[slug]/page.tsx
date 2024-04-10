@@ -6,7 +6,10 @@ import { MDXRemote } from "next-mdx-remote/rsc";
 import Link from "next/link";
 
 function getPost({ name, slug }: { name: string; slug: string }) {
-  const markdownFile = fs.readFileSync(path.join(name, slug + ".mdx"), "utf-8");
+  const markdownFile = fs.readFileSync(
+    path.join(process.cwd(), name, slug + ".mdx"),
+    "utf-8"
+  );
 
   const { data: frontMatter, content } = matter(markdownFile);
 
