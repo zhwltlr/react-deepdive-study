@@ -1,3 +1,9 @@
+---
+title: 02장 정리
+date: "2024/04/10"
+description: 리액트 핵심요소 깊게 살펴보기
+---
+
 ## JSX란?
 
 - JSX는 자바스크립트의 확장 문법으로 XML과 매우 비슷하게 생겼다.
@@ -87,3 +93,262 @@ const ComponentE = () => {
 - 페이지 인터랙션의 증가와 SPA의 증가로 기존 렌더링 과정에 대한 한계 발생
 - 변화가 없는 요소를 레이아웃, 페인팅을 반복하는 비효율
 - 이를 해결하기 위해 페이지에서 표시해야할 DOM 을 메모리에 저장하고, 변경에 대한 준비가 완료 되면 실제 DOM 에 반영하는 가상 DOM을 통해 해결, 렌더링 과정을 최소화 가능
+
+### 가상 DOM을 위한 아키텍처, 리액트 파이버
+
+#### 리액트 파이버란?
+
+- 리액트 파이버는 리액트에서 관리하는 평범한 자바스크립트 객체다.
+- 파이버는 파이버 재조정자(fiber reconciler)가 관리하는 객체로, **렌더링 과정을 효율적으로 관리**하기 위해 만들어졌다.
+  - _리액트에서 어떤 부분을 새롭게 렌더링해야 하는지 가상 DOM과 실제 DOM을 비교하는 과정_
+- 리액트 파이버의 목표는 애니메이션, 레이아웃, 사용자 인터렉션에 올바른 결과물을 만드는 반응성 문제를 해결하는 것이다.
+  - 작업을 작은 단위로 분할하고 쪼갠 다음, 우선순위를 매긴다.
+  - 이러한 작업을 일시 중지하고 나중에 다시 시작할 수 있다.
+  - 이전에 했던 작업을 다시 재사용하거나 필요하지 않은 경우에는 폐기할 수 있다.
+- 이러한 모든 과정이 비동기로 일어난다.
+- 리액트 요소는 렌더링이 발생할 때마다 새롭게 생성되지만 파이버는 **가급적이면 재사용**된다.
+- state 가 변경되거나, 생명 주기 메서드 실행, DOM 변경이 필요한 시점에 리액트 파이버가 실행
+- **_리액트의 가상 DOM 은 사실 간단한 형태의 Value UI, 즉 값을 가지고 있는 UI 를 관리하는 툴에 가깝다_**
+
+#### 리액트 파이버 트리
+
+- 현재 모습을 담은 파이버 트리, 작업 중인 상태를 나타내는 workInProgress 트리로 나뉜다.
+- 더블 버퍼링 : 작업이 요청 되면 workInProgress 트리를 빌드하고, 빌드가 완료 되면 렌더링으로 UI를 교체한다
+
+## 클래스 컴포넌트와 함수 컴포넌트
+
+### 클래스 컴포넌트
+
+- 클래스 컴포넌트는 React.Component 클래스를 상속받아서 만들어진 컴포넌트이다.
+- React.Component : state 가 업데이트되면 무조건 렌더링
+- React.PureComponent : state 가 업데이트 되어도 값을 얕은 비교하여 값의 변화가 있을 때만 렌더링
+
+<details>
+<summary>클래스 컴포넌트 예제</summary>
+
+```bash
+import React from "react";
+// props 타입을 선언한다.
+interface SampleProps {
+  required?: boolean;
+  text: string;
+}
+
+// state 타입을 선언한다.
+interface SampleState {
+count: number;
+isLimited?: boolean;
+}
+
+// Component에 제네릭으로 props, state를 순서대로 넣어준다.
+class SampleComponent extends React.Component<SampleProps, SampleState> {
+// constructor에서 props를 넘겨주고, state의 기본값을 설정한다.
+private constructor(props: SampleProps) {
+super(props);
+this.state = {
+count: 0,
+isLimited: false,
+};
+}
+
+private handleClick = () => {
+const newValue = this.state.count + 1;
+this.setState({ count: newValue, isLimited: newValue >= 10 });
+};
+
+// render에서 이 컴포넌트가 렌더링할 내용을 정의한다.
+public render() {
+// props와 state 값을 this, 즉 해당 클래스에서 꺼낸다.
+const {
+props: { required, text },
+state: { count, isLimited },
+} = this;
+
+    return (
+      <h2>
+        Sample Component
+        <div>{required ? "필수" : "필수아님"}</div>
+        <div>문자: {text}</div>
+        <div>count: {count}</div>
+        <button onClick={this.handleClick} disabled={isLimited}>
+          {" "}
+          증가
+        </button>
+      </h2>
+    );
+
+}
+}
+```
+
+  </details>
+
+- 클래스 컴포넌트는 state와 라이프사이클 메서드를 사용할 수 있다.
+
+#### 실행 시점
+
+- mount
+- update
+- unmount
+
+<details>
+<summary>**생명주기 메서드**</summary>
+#### render
+
+- 항상 순수해야 하며 부수 효과가 없어야 한다.
+- 내부에서 state를 직접 업데이트하는 this.setState를 호출해서는 안된다.
+
+#### componentDidMount
+
+- 컴포넌트가 마운트되고 준비되는 즉시 실행된다.
+- state를 변경했다면 state가 변경되고 그 즉시 다시 한번 리렌더링을 시도한다.
+
+#### componentDidUpdate
+
+- 컴포넌트 업데이트가 일어난 이후 바로 실행된다.
+
+#### componentWillunMount
+
+- cleanup 함수를 호출하기 위한 최적의 위치
+
+#### shouldComponentUpdate
+
+- state, props의 변경으로 리렌더링 되는 것을 막고 싶을때 사용
+
+#### static getDerivedStateFormProps
+
+- render를 호출하기 직전에 호출된다.
+- 여기서 반환되는 객체는 해당 객체의 내용이 모두 state로 들어가게 된다.
+
+#### getSnapShotBeforeUpdate
+
+- DOM이 업데이트되기 직전에 호출된다.
+- 윈도우 크기 조절, 스크롤 위치 조정하는 등의 작업을 처리하는 데 유용한다.
+
+#### getDerivedStateFromError
+
+- 이 메서드를 사용해서 에러 처리 로직을 구현할 수 있다.
+- 부수 효과를 발생시켜선 안된다. 그러므로 에러 로깅도 불가능하고 어떻게 자식 컴포넌트를 렌더링할지 결정하는 용도일 뿐
+
+#### componentDidCatch
+
+- 에러가 발생했을 때 실행되며 getDerivedStateFromError여기서 에러를 잡고 state를 결정한 이후에 실행된다.
+
+</details>
+
+#### 클래스 컴포넌트의 한계
+
+- 데이터의 흐름을 추적하기 어렵다 : state의 흐름을 추적하기 어렵다
+- 애플리케이션 내부 로직의 재사용이 어렵다: 컴포넌트의 로직을 재사용하기 위해서는 HOC, render props, 컴포넌트 컴포지션 등을 사용해야 한다.
+- 기능이 많아질수록 컴포넌트의 크기가 커진다
+- 클래스 컴포넌트는 함수 컴포넌트보다 어렵다
+
+### 클래스 컴포넌트 vs 함수 컴포넌트
+
+- 클래스 컴포넌트
+
+  - state, 라이프사이클 메서드 사용 가능
+  - this에 바인딩된 props 사용
+  - 핫 리로딩이 일어나면 클래스 컴포넌트는 초기화된다
+
+- 함수 컴포넌트
+  - hook을 사용하여 state와 라이프사이클 메서드와 유사하게 구현
+  - props를 인자로 받아 단순한 리액트 요소만 반환
+  - 함수 컴포넌트는 초기화되지 않는다
+
+## 렌더링은 어떻게 일어나는가?
+
+### 리액트의 렌더링이란?
+
+- 모든 컴포넌트들이 현재 자신이 가진 state 와 props 를 가지고 어떤 UI 를 구성하고, DOM 의 결과를 브라우저에 제공할 것인가를 계산하는 일련의 과정
+
+### 리액트의 렌더링이 일어나는 이유
+
+- 최초 렌더링
+- 리 렌더링
+  - 클래스 컴포넌트 : setState, forceUpdate
+  - 함수 컴포넌트 : useState의 setter가 실행되는 경우, useReducer의 dispatch가 실행되는 경우, key props가 변경되는 경우 ,부모 컴포넌트가 리렌더링 되는 경우
+
+### 리액트의 렌더링 프로세스
+
+- 렌더링 프로세스가 시작되면 리액트 컴포넌트의 루트부터 자식 노드들을 탐색하면 업데이트가 필요한 모든 컴포넌트를 찾는다
+- 해당 컴포넌트가 발견되면 클래스 컴포넌트는 내부의 render() 를 수행하고 함수형 컴포넌트는 자체를 호출 후, 저장
+- JSX 코드를 JS 로 변환하고, JS 를 React.creatElement 로 변환하여 객체 결과물(리액트 파이버)을 남긴다
+- 리액트의 재조정(Reconciliation) 을 통해 DOM 이 변화
+
+### 렌더 vs 커밋
+
+- 렌더 : 컴포넌트를 렌더링하고 변경사항을 계산하는 모든 작업
+- 커밋 : 렌더 단계의 변경사항을 실제 DOM에 반영하는 작업으로 해당 과정이 끝나야 브라우저 렌더링이 발생한다.
+
+### 렌더링 시나리오
+
+```jsx
+import { useState } from "react";
+
+export default function A() {
+  return (
+    <div className="App">
+      <h1>Hello React!</h1>
+      <B />
+    </div>
+  );
+}
+
+function B() {
+  const [counter, setCounter] = useState(0);
+  function handleButtonClick() {
+    setCounter((previous) => previous + 1);
+  }
+  return (
+    <>
+      <label>
+        <C number={counter} />
+      </label>
+      <button onClick={handleButtonClick}>+</button>
+    </>
+  );
+}
+
+function C({ number }) {
+  return (
+    <div>
+      {number} <D />
+    </div>
+  );
+}
+
+function D() {
+  return <>리액트 재밌다!</>;
+}
+```
+
+1. B 컴포넌트의 setState 호출
+2. B 컴포넌트의 리렌더링 작업이 렌더링 큐에 들어간다
+3. 리액트의 트리 최상단에서부터 렌더링 경로 검사
+4. A 컴포넌트는 변화가 없으므로 리렌더링이 필요 없음
+5. 하위 컴포넌트인 B 컴포넌트은 업데이트가 필요하므로 B 를 리렌더링
+6. B 컴포넌트가 C 컴포넌트를 자식으로 가지고 있으므로 C 도 리렌더링
+7. C 는 D 를 자식으로 가지고 있음
+8. D 는 리렌더링 사항이 없지만 C 의 자식으로 강제 리렌더링
+
+- 여기서 D 에 memo 를 추가하면 강제 리렌더링을 막을 수 있다
+- 정확히는 렌더링을 통해 비교는 하지만 변화 사항이 없으므로 커밋을 수행하지 않는다
+
+## 컴포넌트와 함수의 무거운 연산을 기억해 두는 메모이제이션
+
+- 메모이제이션 : 함수의 결과를 저장해 두었다가 같은 인자가 들어오면 이전에 계산한 값을 반환하는 기법으로 리액트에서 발생하는 렌더링을 최소화하기 위해 사용된다.
+
+### 신중히 사용하자
+
+- **메모이제이션도 비용이 발생한다.**
+  - 렌더링 또는 재계산이 필요한지 확인하는 비용
+  - 이전 결과물을 저장해 두었다가 다시 꺼내 와야 하는 비용
+- 가벼운 작업인 경우, 메모이제이션을 사용하지 않는 것이 더 효율적일 수 있다.
+- 어플리케이션을 어느정도 만든 후, 개발자 도구나 `useEffect`를 사용해 실제로 어떻게 렌더링이 일어나는지 확인 후 최적화 하는 것이 좋다.
+
+### 전부 사용하자
+
+- **현실적으로 최적화나 성능 향상에 쏟을 시간이 적다.**
+- 일단 memo로 감싼 뒤에 생각해보는 것이 더 나을 수 있다.
+- 지불해야하는 비용의 경우, 리액트의 기본적인 알고리즘으로 이전 결과물은 저장되어 있기 때문에 우리가 memo로 지불해야 하는 비용은 props에 대한 얕은 비교 뿐이다.
