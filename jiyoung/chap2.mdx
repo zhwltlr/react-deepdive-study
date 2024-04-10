@@ -1,0 +1,89 @@
+## JSX란?
+
+- JSX는 자바스크립트의 확장 문법으로 XML과 매우 비슷하게 생겼다.
+- JSX 코드는 바벨과 같은 트랜스파일러를 통해 일반 자바스크립트 코드로 변환된다.
+
+### JSX의 정의
+
+#### JsxElement
+
+- JsxOpeningElement, JsxClosingElement, JsxSelfClosingElement, JsxFragment
+
+- **JSXElementName** : JSXElement의 요소 이름으로 쓸 수 있는 것
+  - JSXIdentifier : JSX 내부에서 사용할 수 있는 식별자
+    ```bash
+    <div></div>
+    ```
+  - JSXNamespacedName : :을 통해 서로 다른 식별자를 이어주는 것으로 한 개만 묶을 수 있다.
+    ```bash
+    <MyComponent:MyComponent></MyComponent:MyComponent>
+    ```
+  - JSXMemberExpression : .을 통해 서로 다른 식별자를 이어주는 것으로 여러 개를 묶을 수 있다.
+    ```bash
+    <MyComponent.MyComponent></MyComponent.MyComponent>
+    ```
+- **JSXAttribute** : JSXElement의 속성으로 쓸 수 있는 것
+  - JSXAttribute : JSXElement의 속성을 나타내는 것
+    ```bash
+    <div id="myId"></div>
+    ```
+  - JSXSpreadAttribute : JSXElement의 속성을 나타내는 것
+    ```bash
+    <div {...props}></div>
+    ```
+- **JSXChildren** : JSXElement의 자식으로 쓸 수 있는 것
+  - JSXText : JSXElement의 텍스트를 나타내는 것
+    ```bash
+    <div>text</div>
+    ```
+
+### JSX 예제
+
+- 앞서 말한 요소를 조합하면 모두 유효한 JSX 구조를 띄게 된다.
+
+```bash
+// 사용되는 경우는 없지만 유효한 문법들
+cosnt ComponentA = () => {
+  return <A.B></A.B>;
+}
+
+const ComponentB = () => {
+  return <A.B.C></A.B.C>;
+}
+
+const ComponentC = () => {
+  return <A:B.C></A:B.C>;
+}
+
+const ComponentD = () => {
+  return <$></$>;
+}
+
+const ComponentE = () => {
+  return <_></_>;
+}
+```
+
+### JSX는 어떻게 자바스크립트에서 변환될까?
+
+- JSX는 바벨과 같은 트랜스파일러를 통해 일반 자바스크립트 코드로 변환된다.
+- `@babel/plugin-transform-react-jsx` 플러그인을 사용하여 JSX 를 JS 로 변환
+
+## 가상 DOM과 리액트 파이버
+
+### DOM과 브라우저 렌더링 과정
+
+1. 브라우저가 HTML 파일 다운로드
+2. HTML 파싱하여 DOM 노드 트리를 구성하고 CSS 파일도 같이 다운로드
+3. CSS 도 파싱, CSS 트리(CSSOM) 구성
+4. 2에서 만든 DOM을 사용자 눈에 보이는 것만 순회하여 트리를 분석하는 과정을 조금이라도 빠르게 한다.
+5. 보이는 DOM 요소에 대한 CSSOM 정보를 찾아서 적용
+
+- 레이아웃 : 각 DOM 노드가 브라우저 화면 어디에 나타나야 하는지 계산하는 과정
+- 페인팅 : 레이아웃 단계를 거친 노드에 실제 유효한 모습을 그리는 과정
+
+### 가상 DOM의 탄생 배경
+
+- 페이지 인터랙션의 증가와 SPA의 증가로 기존 렌더링 과정에 대한 한계 발생
+- 변화가 없는 요소를 레이아웃, 페인팅을 반복하는 비효율
+- 이를 해결하기 위해 페이지에서 표시해야할 DOM 을 메모리에 저장하고, 변경에 대한 준비가 완료 되면 실제 DOM 에 반영하는 가상 DOM을 통해 해결, 렌더링 과정을 최소화 가능
