@@ -1,16 +1,747 @@
 ---
 title: 01장 정리
-date: "2024/03/29"
+date: "2024/04/02"
 description: 리액트 개발을 위해 꼭 알아야 할 자바스크립트
 ---
 
-markdown 형식을 지켜서 여기에 작성해주시면 됩니다.
-![Test img](/assets/jiyoung/testimg.jpg)
+## 자바스크립트의 동등 비교
+
+### 자바스크립트의 데이터 타입
+
+#### Primitive Data (원시 자료형)
+
+- 가장 기본적인 데이터 타입으로, 값이 메모리에 직접 저장된다.
+
+1. 숫자(Number): 정수와 실수를 포함한 모든 숫자 값
+
+   ```bash
+   let integerNumber = 42;
+   let floatingNumber = 3.14;
+   ```
+
+- C나 Java의 경우, 정수와 실수를 구분하여 int, long, float, double 등과 같은 다양한 숫자 타입이 존재한다. 하지만 자바스크립트는 독특하게 하나의 숫자 타입만 존재한다.
+
+- 자바스크립트의 숫자 타입은 정수만을 위한 타입이 없고 모든 수를 실수를 처리한다. 정수로 표시된다해도 사실은 실수다. 따라서 정수로 표시되는 수 끼리 나누더라도 실수가 나올 수 있다.
+
+  ```bash
+  console.log(1 === 1.0); // true
+  var result = 4 / 2;
+  console.log(result); // 2
+  result = 3 /2;
+  console.log(result); // 1.5
+  ```
+
+2. 문자열(String): 문자들의 나열로 텍스트를 나타냄. 0개 이상의 16bit 유니코드 문자(UTF-16) 들의 집합으로 대부분의 전세계의 문자를 표현할 수 있다
+
+   ```bash
+   let greeting = "Hello, World!";
+   let name = 'jyp';
+   ```
+
+3. 불리언(Boolean): true or false 값을 가진다
+
+   ```bash
+   let isTrue = true;
+   let isFalse = false;
+   ```
+
+4. undefined: 변수가 선언되었지만 값이 할당되지 않은 상태를 나타낸다
+
+   ```bash
+   let variableWithoutValue;
+   ```
+
+5. null: 값이 비어있거나 존재하지 않음을 나타낸다
+
+   ```bash
+   let emptyValue = null;
+   ```
+
+- 변수가 기억하는 메모리 어드레스의 참조 정보를 제거하는 것을 의미하며 자바스크립트 엔진은 누구도 참조하지 않는 메모리 영역에 대해 가비지 콜렉션을 수행할 것이다.
+
+6. 심볼(Symbol): ES6부터 추가된 데이터 타입으로, 고유하고 변경 불가능한 값을 나타냄
+
+   ```bash
+   const uniqueKey = Symbol("unique");
+   const anotherKey = Symbol("unique"); // 서로 다른 고유한 값
+   ```
+
+- 심볼은 주로 이름의 충돌 위험이 없는 유일한 객체의 프로퍼티 키(property key)를 만들기 위해 사용한다
+
+7. Bigint
+
+- BigInt는 정수를 표현하기 위한 내장 객체로, 정수 리터럴 끝에 n을 붙여서 생성한다.
+
+  ```bash
+  const bigInt = 1234567890123456789012345678901234567890n;
+  ```
+
+#### Reference Data (참조형)
+
+- 이 데이터 타입은 값이 직접 메모리에 저장되지 않고, 값이 저장된 메모리 주소를 참조한다.
+- 객체는 데이터와 그 데이터에 관련한 동작(절차, 방법, 기능)을 모두 포함할 수 있는 개념적 존재이다.
+- 자바스크립트는 객체 기반의 스크립트 언어로서 자바스크립트를 이루고 있는 거의 "모든 것”이 객체이다. 원시 타입을 제외한 나머지 값들(배열, 함수, 정규표현식 등)은 모두 객체이다. 또한 객체는 pass-by-reference(참조에 의한 전달) 방식으로 전달된다.
+- 객체(Object): 여러 개의 데이터를 그룹화한 복합적인 데이터 타입
+
+  ```bash
+  let person = {
+      firstName: "p",
+      lastName: "jy",
+      age: 3
+  };
+  ```
+
+- 배열(Array): 순서가 있는 데이터의 집합을 나타냄
+
+  ```bash
+  let numbers = [1, 2, 3, 4, 5];
+  let fruits = ["mango", "banana", "tomato"];
+  ```
+
+- 함수(Function): 재사용 가능한 코드 블록을 나타냄
+
+  ```bash
+  function greet(name) {
+  console.log(`Hello, ${name}!`);
+  }
+  greet("jyp"); // 출력: Hello, jyp!
+  ```
+
+### 값을 저장하는 방식의 차이
+
+- 원시 타입과 객체 타입의 가장 큰 차이점은 변수에 저장될 때 값이 저장되는 방식이다.
+- 원시타입
+  ```
+  let hello = "hello";
+  let hi = hello;
+  console.log(hello === hi); // true
+  ```
+- 객체타입
+  ```
+  var hello = {
+    greet : "hello, world"
+  }
+  var hi = {
+    greet : "hello, world"
+  }
+  console.log(hello === hi); // false
+  ```
+  - 객체는 값을 저장하는 것이 아니라 참조를 저장하므로, 두 객체는 서로 다른 메모리 주소를 참조하므로 false가 출력된다.
+
+### Object.is
+
+- `==` vs `Object.is` : `==`는 동등 비교 연산자로, 같음을 비교하기 전에 양쪽이 같은 타입이 아니라면 비교할 수 있도록 강제로 형변환을 한 후에 비교한다.
+
+  ```
+  console.log(0 === -0); // true
+  console.log(Object.is(0, -0)); // false
+
+  console.log(NaN === NaN); // false
+  console.log(Object.is(NaN, NaN)); // true
+  ```
+
+  - `Object.is`는 `NaN`과 `+0`, `-0`을 구별하므로, `NaN`과 `NaN`은 같다고 판단한다.
+  - **_객체 비교는 별 차이가 없다._**
+
+### 리액트에서의 동등 비교
+
+<details>
+  <summary>React ObjectIs</summary>
+  ```bash
+  function is(x: any, y: any) {
+    return (
+      (x === y && (x !== 0 || 1 / x === 1 / y)) || (x !== x && y !== y) // eslint-disable-line no-self-compare
+    );
+  }
+  const objectIs: (x: any, y: any) => boolean =
+    typeof Object.is === 'function' ? Object.is : is;
+  export default objectIs;
+  ```
+</details>
+
+<details>
+  <summary>shallowEqual</summary>
+  ```bash
+  import is from './objectIs';
+  import hasOwnProperty from './hasOwnProperty';
+  function shallowEqual(objA: mixed, objB: mixed): boolean {
+    if (is(objA, objB)) {
+      return true;
+    }
+  if (
+    typeof objA !== 'object' ||
+    objA === null ||
+    typeof objB !== 'object' ||
+    objB === null
+  ) {
+    return false;
+  }
+  const keysA = Object.keys(objA);
+  const keysB = Object.keys(objB);
+  if (keysA.length !== keysB.length) {
+    return false;
+  }
+  for (let i = 0; i < keysA.length; i++) {
+    const currentKey = keysA[i];
+  if (
+    !hasOwnProperty.call(objB, currentKey) ||
+    // $FlowFixMe[incompatible-use] lost refinement of `objB`
+    !is(objA[currentKey], objB[currentKey])
+  ) {
+      return false;
+    }
+  }
+  return true;
+  }
+  export default shallowEqual;
+  ```
+
+</details>
+
+- Object.is로 먼저 비교를 하고, 객체 간 얕은 비교를 한 번 더 수행한다.
+- 객체의 경우, 얕은 비교를 수행하므로, 객체 내부의 객체까지 비교하지는 않는다.
+- React는 props만 일차적으로 비교하면 되기 때문에 얕은 비교를 수행한다.
+
+  ```jsx
+  type Props = { hello: string };
+  function HelloComponent(props: Props) {
+    return <div>{props.hello}</div>;
+  }
+  function App() {
+    return <HelloComponent hello="hi" />;
+  }
+  ```
+
+- 리액트는 props에서 꺼내온 값을 기준으로 렌더링을 수행하기 때문에 얕은 비교로도 충분하다.
+
+## 함수
+
+### 함수란 무엇인가?
+
+- 자바스크립트에서 함수란, 일련의 과정을 문(statement)으로 구현하고 코드 블록으로 감싸서 하나의 실행 단위로 정의한 것이다.
+- 리액트에서의 함수
+  ```jsx
+  function Component(props) {
+    return <div>{props.hello}<div>;
+  }
+  ```
+  - 일반적인 함수와의 차이점 : 함수 컴포넌트는 `<Component hello={props.hello} />`와 같이 단일 porps 객체를 인자로 받거나, `<Component {...props} />` 같은 형태로 모든 props를 받을 수 있다.
+
+### 함수를 정의하는 4가지 방법
+
+1. 함수 선언문 (Function Declaration)
+   ```bash
+   function add(x, y) {
+     return x + y;
+   }
+   ```
+2. 함수 표현식 (Function Expression)
+
+- 일급 객체 : 다른 객체들에 일반적으로 적용 가능한 연산을 모두 지원하는 객체로, 함수를 변수에 할당하거나, 함수의 인자로 전달하거나, 함수에서 반환할 수 있다.
+
+  ```bash
+  const add = function(x, y) {
+      return x + y
+  };
+  ```
+
+**함수 표현식과 선언식의 차이**
+
+- 호이스팅 여부
+  - 함수 선언식 : 함수의 호이스팅은 함수에 대한 선언을 실행 전에 미리 메모리에 등록
+  - 함수 표현식 : 함수를 변수에 할당했다. 변수는 런타임 이전에 undefined로 초기화 되고, 런타임 시점에 함수가 할당되어 작동한다.
+
+3. Function 생성자 함수 (Function Constructor)
+
+   ```bash
+    const add = new Function('x','y','return x + y');
+   ```
+
+4. 화살표 함수 (Arrow Function)
+   ```bash
+    const add = (x, y) => x + y;
+   ```
+
+- 기존 함수 생성 방식과의 차이점
+  - 화살표 함수는 생성자로 사용할 수 없다.
+  - 화살표 함수는 arguments가 존재하지 않는다.
+    - arguments : 함수 내부에서 사용할 수 있는 지역 변수로, 함수 호출 시 전달된 인자들의 정보를 담고 있는 객체이다. [참고](https://fromnowwon.tistory.com/entry/arguments)
+  - 화살표 함수의 this는 상위 스코프의 this를 가리킨다.
+    - this : 자신이 속한 객체 또는 자신이 생성할 인스턴스를 가리키는 자기 참조 변수
+
+### 다양한 함수
+
+#### 즉시 실행 함수
+
+- 함수를 정의함과 동시에 실행하는 함수로, 한 번 사용하고 다시 사용하지 않을 때 사용함으로써 전역 스코프의 오염을 막을 수 있다.
+
+  ```bash
+  (function() {
+    console.log('즉시 실행 함수');
+  })();
+  ```
+
+  #### 고차 함수
+
+- 함수를 인자로 받거나 함수를 반환하는 함수로, 이와 유사하게 고차함수 컴포넌트를 만들면 컴포넌트 내부에서 공통으로 관리되는 로직을 분리해 관리할 수 있다.
+  ```bash
+  function add(x) {
+    return function(y) {
+      return x + y;
+    };
+  }
+  add(1)(3) // 4
+  ```
+
+### 주의 사항
+
+#### 함수의 부수 효과를 최대한 억제하라
+
+- 부수 효과 : 함수 내부에서 함수 외부의 상태를 변경하는 것
+
+#### 가능한 한 함수를 작게 만들어라
+
+#### 누구나 이해할 수 있는 이름을 붙여라
+
+---
+
+## 클래스
+
+### 클래스란 무엇인가?
+
+- 특정한 객체를 만들기 위한 일종의 템플릿
+
+```bash
+class Car{
+  // 생성자 : 객체를 생성하는 특수한 메서드
+  // 단 하나만 존재할 수 있다.
+  constructor(name){
+    // 프로퍼티 : 내부에 정의할 수 있는 속성값
+    this.name = name;
+  }
+
+  // 메서드 : 클래스 내부에서 선언한 메서드
+  // 새롭게 생성한 객체에서 인스턴스 메서드에 접근할 수 있다.
+  hook(){
+    console.log(`${this.name} 이 경적을 울린다.`);
+  }
+
+  // 정적 메서드 : 클래스의 인스턴스가 아닌 이름으로 호출할 수 있는 메서드다.
+  // 객체를 생성하지 않아도 여러 곳에서 재사용 할 수 있기 때문에 전역에서 사용하는 유틸함수를 정적 메서드로 많이 활용하는 편이다.
+  static hello(){
+    console.log('나는 자동차');
+  }
+
+  // setter : 프로퍼티 값을 설정할 때 사용
+  set age(value){
+    this.carAge = value;
+  }
+
+  // getter : 프로퍼티 값을 읽을 때 사용
+  get age(){
+    return this.carAge;
+  }
+}
+
+const myCar = new Car('자동차');
+myCar.hook(); // 자동차 이 경적을 울린다.
+Car.hello(); // 나는 자동차
+myCar.age = 10;
+console.log(myCar.age); // 10
+```
+
+#### 클래스 상속
 
 ```
-export function myComponent(){
-    return (
-        <p>code space</p>
-    )
+class Truck extends Car{
+  constructor(name, weight){
+    // super : 부모 클래스의 생성자를 호출하는 키워드
+    super(name);
+    this.weight = weight;
+  }
+
+  // 메서드 오버라이딩 : 부모 클래스의 메서드를 자식 클래스에서 재정의하는 것
+  load(){
+    console.log(`${this.name} 이 ${this.weight}kg 물건을 실었다.`);
+  }
 }
 ```
+
+## 클로저
+
+### 클로저의 정의
+
+- 클로저는 함수와 그 함수가 선언될 당시의 **_렉시컬 환경과의 조합_**이다.
+
+  ```
+  function add(){
+    const a = 10;
+    function innerAdd(){
+      const b = 20;
+      console.log(a + b);
+    }
+    innerAdd() // 30
+  }
+
+  add();
+  ```
+
+- a 변수의 유효 범위는 add 전체이고, b의 유효 범위는 innerAdd 함수 내부이다.
+- innerAdd 함수는 add 함수 내부에서 선언되었기 때문에 add 함수의 렉시컬 환경을 기억하고 있다. 따라서 innerAdd 함수는 add 함수의 변수에 접근할 수 있다.
+- _선언된 어휘적 환경_ 은, 변수가 코드 내부에서 어디에 선언되었는지에 따라 결정된다.
+- 클로저는 이러한 어휘적 환경을 조합해 코딩하는 기법이다.
+
+### 스코프
+
+#### 전역 스코프
+
+- 전역 레벨에 선언한 것
+- 전역 스코프에 선언된 변수는 어디서든 접근 가능하다.
+
+#### 함수 스코프
+
+- 함수 내부에 선언한 것
+- 자바스크립트는 함수 스코프를 따르기 때문에 함수 내부에서 선언된 변수는 함수 내부에서만 접근 가능하다.
+  ```bash
+  function hello(){
+    var local = 'local variable';
+    console.log(local); // local variable
+  }
+  hello();
+  console.log(local); // ReferenceError: local is not defined
+  ```
+
+### 클로저의 활용
+
+```bash
+function Counter(){
+  var counter = 0 ;
+  return {
+    increase : function(){
+      return ++counter;
+    },
+    decrease : function(){
+      return --counter;
+    }
+    counter : function(){
+      return counter;
+    },
+  }
+}
+
+const counter = Counter();
+console.log(counter.increase()); // 1
+console.log(counter.increase()); // 2
+console.log(counter.decrease()); // 1
+```
+
+- counter 변수의 업데이트를 increase, decrease로 제한해 무분별하게 변경되는 것을 막았다.
+
+#### 리액트에서의 클로저
+
+```jsx
+function Component() {
+  const [state, setState] = useState();
+  function handleClick() {
+    setState((prev) => prev + 1);
+  }
+  // ...
+}
+```
+
+- 클로저가 useState 내부에서 활용되었다.
+- 외부 함수(useState)가 반환한 내부 함수(setState)는 외부 함수(useState)의 호출이 끝났음에도 자신이 선언된 외부 함수가 선언된 환경을 기억한다.
+
+#### 주의사항
+
+- 클로저는 생성될 때마다 그 선언적 환경을 기억해야 하므로 추가로 비용이 발생한다.
+- 클로저를 남발하면 메모리 누수가 발생할 수 있다.
+  ```bash
+  function heavyJobWithClosure(){
+    const longArr = Array.from({length: 1000000}, (_, i) => i);
+    return function(){
+      console.log(longArr.length);
+    }
+  }
+  const innerFunc = heavyJobWithClosure();
+  Button.addEventListener('click', function(){
+    innerFunc();
+  });
+  ```
+  - heavyJobWithClosure 함수가 실행될 때 생성된 longArr 배열을 메모리에 두고 있다.
+
+---
+
+## 이벤트 루프와 비동기 통신의 이해
+
+### 싱글 스레드 자바스크립트
+
+- 자바스크립트는 싱글 스레드 언어로, 한 번에 하나의 작업만 처리할 수 있다.
+- 비동기란 어떤 작업이 끝날 때까지 기다리지 않고 다른 작업을 수행하는 것을 의미한다.
+- 자바스크립트는 비동기 처리를 위해 이벤트 루프를 사용한다.
+
+### 이벤트 루프
+
+#### 호출 스택과 이벤트 루프
+
+- 호출 스택 : 자바스크립트에서 수행해야 할 코드나 함수를 순차적으로 담아두는 스택이다.
+
+  ```
+  function bar(){
+    console.log('bar');
+  }
+  function baz(){
+    console.log('baz');
+  }
+  function foo(){
+    console.log('foo');
+    bar();
+    baz();
+  }
+  foo();
+  ```
+
+  - foo 함수가 호출되면 호출 스택에 foo 함수가 쌓이고, bar 함수가 호출되면 호출 스택에 bar 함수가 쌓인다. 이후 baz 함수가 호출되면 호출 스택에 baz 함수가 쌓인다. baz 함수가 실행되면 호출 스택에서 baz 함수가 제거되고, bar 함수가 실행되면 호출 스택에서 bar 함수가 제거된다. 마지막으로 foo 함수가 실행되면 호출 스택에서 foo 함수가 제거된다.
+  - 이벤트 루프 : 이 호출 스택이 비어 있는지 여부를 확인하는 것
+
+    ```bash
+    function bar(){
+      console.log('bar');
+    }
+    function baz(){
+      console.log('baz');
+    }
+    function foo(){
+      console.log('foo');
+      setTimeout(bar(),0) // 변경
+      baz();
+    }
+    foo();
+    ```
+
+  - setTimeout 함수는 비동기 함수로, 두 번째 인자로 전달된 시간이 지나면 콜백 함수를 호출한다. 이때, 콜백 함수는 호출 스택이 아닌 태스크 큐에 들어간다.
+  - 태스크 큐 : 실행해야 할 테스크의 집합
+  - 이벤트 루프는 호출 스택이 비어있을 때 태스크 큐에 있는 콜백 함수를 호출 스택으로 옮긴다.
+
+**_자바스크립트 코드 실행은 싱글 스레드에서 이루어지지만 이러한 외부 Web API등은 모두 자바스크립트 코드 외부에서 실행되고 콜백이 태스크 큐로 들어가는 것이다._**
+
+### 태스크 큐와 마이크로 태스크 큐
+
+- 마이크로 태스크 큐 : Promise 객체의 then 메서드나 catch 메서드로 등록한 콜백 함수가 들어가는 큐
+- **마이크로 태스크 큐는 기존 태스크 큐보다 우선순위가 높다.**
+- 렌더링은 마이크로 태스크 큐가 실행되고 난 후에 , 태스크 큐를 실행하기 전에 일어난다.
+- 결론적으로 마이크로 태스크 또한 렌더링에 영향을 미친다.
+
+## 리액트에서 자주 사용하는 리액트 문법
+
+### 구조 분해 할당
+
+- 구조 분해 할당은 객체나 배열을 해체하여 그 값을 개별 변수에 담을 수 있게 하는 자바스크립트 표현식이다.
+
+  ```
+  const array = [1, 2, 3];
+  const [a, ...rest] = array;
+  console.log(a); // 1
+  console.log(rest); // [2, 3]
+  ```
+
+  ```
+  const object = {
+    a: 1,
+    b: 2,
+    c: 3
+  }
+  const {a, ...rest} = object;
+  console.log(a); // 1
+  console.log(rest); // {b: 2, c: 3}
+  ```
+
+### 전개 구문
+
+- 전개 구문은 배열이나 객체를 확장하거나 병합할 때 사용한다.
+
+  ```bash
+  const array = [1, 2, 3];
+  const newArray = [...array, 4, 5];
+  console.log(newArray); // [1, 2, 3, 4, 5]
+
+  const object = {
+    a: 1,
+    b: 2,
+    c: 3
+  }
+  const newObject = {...object, d: 4, e: 5};
+  console.log(newObject); // {a: 1, b: 2, c: 3, d: 4, e: 5}
+  ```
+
+### 객체 초기자
+
+- 객체 초기자는 객체를 생성할 때 변수 이름과 동일한 속성을 초기화할 때 사용한다.
+
+  ```bash
+  const a = 1;
+  const b = 2;
+  const c = 3;
+  const object = {a, b, c};
+  console.log(object); // {a: 1, b: 2, c: 3}
+  ```
+
+### Array 프로토타입의 메서드 : map, filter, reduce, forEach
+
+#### map
+
+- map 메서드는 배열 내의 모든 요소에 대해 주어진 함수를 호출한 결과를 모아 새로운 배열을 반환한다.
+- 리액트에서는 주로 특정 배열을 기반으로 어떠한 리액트 요소를 반환하고자 할때 많이 사용된다.
+
+  ```bash
+  const array = [1, 2, 3];
+  const Elements = arr.map((item)=>{return <div>{item}</div>});
+  ```
+
+#### filter
+
+- filter 메서드는 주어진 함수의 테스트를 통과하는 모든 요소를 모아 새로운 배열로 반환한다.
+
+#### reduce
+
+- reduce 메서드는 배열의 각 요소에 대해 주어진 리듀서 함수를 실행하고, 하나의 결과값을 반환한다.
+
+  ```bash
+  const array = [1, 2, 3];
+  const sum = array.reduce((acc, cur) => acc + cur, 0);
+  console.log(sum); // 6
+  ```
+
+#### forEach
+
+- forEach 메서드는 배열의 각 요소에 대해 주어진 함수를 실행한다.
+- 리턴값이 없고, 배열 순회를 멈출 수 없다.
+
+### 삼항 조건 연산자
+
+- 삼항 조건 연산자는 조건에 따라 값을 반환하는 연산자이다.
+- 리액트에서는 주로 조건부 렌더링을 할 때 많이 사용된다.
+
+  ```bash
+  function Component({condition}){
+    return (
+      <div>
+        {condition ? <div>참</div> : <div>거짓</div>}
+      </div>
+    )
+  }
+  ```
+
+- 중첩은 피하는 것이 좋다.
+
+## 타입스크립트
+
+### 타입스크립트란
+
+- 자바스크립트에 타입을 부여한 언어
+- 런타임이 아닌 빌드 타임에 수행할 수 있게 해준다.
+
+### 리액트를 효과적으로 작성하기 위한 타입스크립트 활용법
+
+#### any 대신 unknown 사용하기
+
+- any는 모든 타입을 허용하는 타입이다. 하지만 unknown은 모든 타입을 허용하지만, 타입을 정의하지 않은 상태에서는 사용할 수 없다.
+
+  ```bash
+  function doSomething(callback: unknown){
+    if(typeof callback === 'function'){
+      callback();
+      return;
+    }
+
+    throw new Error('callback is not a function');
+  }
+  ```
+
+- never 타입은 절대 발생하지 않는 값의 타입을 나타낸다.
+
+#### 타입 가드 적극 활용하기
+
+- 조건문과 함께 타입 가드를 사용하면 타입을 효과적으로 좁힐 수 있다.
+- `instance of` : 객체가 특정 클래스의 인스턴스인지 확인하는 연산자
+  ```bash
+  function doSomething(value: string | number){
+    if(value instanceof String){
+      console.log(value.toUpperCase());
+    }else{
+      console.log(value.toFixed());
+    }
+  }
+  ```
+- `typeof` : 변수의 타입을 확인하는 연산자
+  ```bash
+  function doSomething(value: string | number){
+    if(typeof value === 'string'){
+      console.log(value.toUpperCase());
+    }else{
+      console.log(value.toFixed());
+    }
+  }
+  ```
+- `in` : 객체의 속성이 존재하는지 확인하는 연산자
+  ```bash
+  interface Student{
+    age: number;
+    score: number;
+  }
+  interface Teacher{
+    name: string;
+  }
+  function doSomething(value: Student | Teacher){
+    if('age' in value){
+      console.log(value.age); // Student 타입
+    }else{
+      console.log(value.name); // Teacher 타입
+    }
+  }
+  ```
+
+#### 제네릭
+
+- 제네릭은 타입을 파라미터로 전달하는 방법이다.
+- 함수나 클래스를 정의할 때 타입을 명시하지 않고, 타입을 파라미터로 받아 사용할 수 있다.
+  ```
+  function Component(){
+    // useState의 제네릭 타입으로 string을 전달
+    const [state, setState] = useState<string>('');
+  }
+  ```
+
+#### 인덱스 시그니처
+
+- 인덱스 시그니처는 객체의 키를 정의하는 방식을 의미한다.
+- 객체의 키와 값의 타입을 정의할 수 있다.
+  ```
+  interface Student{
+    [key: string]: string;
+  }
+  const student: Student = {
+    name: 'jyp',
+    age: '3',
+  }
+  ```
+- 인덱스 시그니처는 객체의 키와 값의 타입을 정의할 수 있으므로, 동적인 키와 값의 타입을 가진 객체를 정의할 때 유용하다.
+- 존재하지 않는 키로 접근하면 undefined를 반환하기 때문에 주의해야 한다.
+  - record 사용
+    ```bash
+    type Hello = Record<'hello' | 'hi', string>
+    const hello: Hello = {
+      hello: 'hello',
+      hi: 'hi',
+    }
+    ```
+  - type을 사용한 인덱스 시그니처
+    ```bash
+    type Hello = {
+      [key in 'hello' | 'hi']: string
+    }
+    const hello: Hello = {
+      hello: 'hello',
+      hi: 'hi',
+    }
+    ```
