@@ -37,11 +37,11 @@ function Component() {
 
 - useState의 초기값은 함수로 지정할 수 있다.
 
-```bash
-const [counter, setCounter] = useState(() => {
-  Number.parseInt(localStorage.getItem('count') || 0);
-});
-```
+  ```bash
+  const [counter, setCounter] = useState(() => {
+    Number.parseInt(localStorage.getItem('count') || 0);
+  });
+  ```
 
 - 위 코드는 컴포넌트가 렌더링될 때마다 localStorage를 조회하는 것이 아니라, **최초 렌더링 시에만 조회**한다.
 - 무거운 연산이 필요한 초기값을 지정할 때 사용하면 좋다.
@@ -122,3 +122,224 @@ export default function App() {
 - 함수의 재생성을 막아 불필요한 리소스 또는 리렌더링을 방지하고 싶을 때 사용한다.
 
 ### useRef
+
+- useRef는 **DOM 요소에 접근**하거나 **컴포넌트 내부에서 값을 저장**할 때 사용한다.
+- 반환값인 객체 내부에 있는 current로 값에 접근 또는 변경할 수 있다.
+- 값이 변하더라도 렌더링을 발생시키지 않는다.
+
+  ```jsx
+  import React, { useEffect, useRef, useState } from "react";
+
+  function usePrevious(value) {
+    const ref = useRef();
+
+    // value 가 변경되면, value 값을 ref에 넣어둔다
+    useEffect(() => {
+      ref.current = value;
+    }, [value]);
+
+    return ref.current;
+  }
+
+  export default function SomeComponent() {
+    const [counter, setCounter] = useState(0);
+    const previousCounter = usePrevious(counter);
+
+    const handleClick = () => {
+      setCounter((prev) => prev + 1);
+    };
+
+    return (
+      <div>
+        <button onClick={handleClick}>
+          {counter} / {previousCounter}
+        </button>
+      </div>
+    );
+  }
+  ```
+
+### useContext
+
+#### Context란?
+
+- props drilling을 완화하기 위해 선언한 하위 컴포넌트에 바로 값을 보내기 위한 방법
+
+#### Context 를 사용할 수 있게 해주는 useContext 훅
+
+- useContext는 Context 객체를 받아 해당 Context의 Provider로부터 값을 받아온다.
+- 여러개가 선언 된 경우, 가까이 있는 Provider 의 값을 가져온다
+- 컴포넌트가 복잡해 질 수록, Context 가 존재하지 않아 에러가 날 수 있으니 유의해서 사용이 필요하다
+
+#### useContext 사용할 때 주의할 점
+
+- useContext 를 사용하면 Provider 에 의존성을 가지게 되므로 컴포넌트의 재활용이 어려워 진다
+- 그렇다고 최상위 컴포넌트에 모든 컨텍스트를 넣는 것은 불필요한 리소스 낭비가 된다
+- useContext 는 주입된 상태를 사용할 수 있을 뿐, 렌더링 최적화 등의 기능은 제공하지 않는다.
+
+### useReducer
+
+- useReducer는 상태를 관리하는 훅 중 하나로, useState와 비슷하게 동작한다.
+- useReducer는 상태를 업데이트하는 로직을 컴포넌트 밖으로 분리할 수 있어서, 컴포넌트 내부에서 상태 업데이트 로직을 작성하는 것보다 더 복잡한 상태 로직을 작성할 때 유용하다.
+- 반환값
+  - state : 현재 상태
+  - dispatcher : action을 발생시키는 함수
+- 인수
+  - reducer : 기본 action을 정의하는 함수
+  - initialState : 초기 상태
+  - init : 초기 값을 지연해서 생성시키고 싶을 때 사용하는 함수(optional)
+
+### useImperativeHandle
+
+#### React.forwardRef
+
+- React.forwardRef는 ref를 전달할 수 있게 해주는 함수이다.
+- useRef 로 HTML 요소를 props 로 보내는 경우, props 명을 ref 로 사용할 경우 리액트의 예약어와 충돌이 나는 문제가 발생한다.
+- 물론 다른 props 명을 사용하여 전달하면 문제가 없지만, forwardRef 를 사용하면 좀 더 명확하게 사용이 가능하다.
+
+#### useImperativeHandle
+
+- 부모에서 넘겨 받은 ref 를 원하는 대로 수정할 수 있는 훅
+- 부모로 부터 받은 ref 요소에 자식 컴포넌트에서 임의로 동작등을 추가가 가능하고 이를 바로 부모에 적용이 가능해진다
+- 반드시 부모 컴포넌트에서 모든 것을 정의하여 내려줄 필요가 없다는 장점이 생긴다
+
+### useLayoutEffect
+
+- useEffect와 비슷하지만, 렌더링 이후에 동기적으로 실행된다.
+
+### useDebugValue
+
+- 커스텀 훅을 사용할 때 디버깅을 위해 사용한다.
+- useDebugValue의 두 번째 인자로 포맷팅 함수를 넘겨 디버깅을 용이하게 한다.
+
+  ```jsx
+  function useCustomHook() {
+    const [state, setState] = useState(0);
+    useDebugValue(state, (state) => `state: ${state}`);
+    return [state, setState];
+  }
+  ```
+
+- useDebugValue는 개발자 도구에서 커스텀 훅의 이름을 보여준다.
+
+### 훅의 규칙
+
+- 훅은 컴포넌트의 최상위에서만 호출해야 한다.
+- 훅은 함수 컴포넌트 또는 커스텀 훅 내부에서만 호출해야 한다.
+- 훅은 조건문, 반복문, 중첩 함수 내부에서 호출하면 안된다.
+
+## 사용자 정의 훅과 고차 컴포넌트 중 무엇을 써야 할까?
+
+### 사용자 정의 훅
+
+- 사용자 정의 훅은 **컴포넌트 로직을 재사용**할 수 있게 해준다.
+
+<details>
+<summary>useFetch 예시</summary>
+
+```jsx
+import { useEffect, useState } from "react";
+
+function useFetch<T>(
+  url: string,
+  { method, body }: { method: string; body?: XMLHttpRequestBodyInit }
+) {
+  const [result, setResult] = useState<T | undefined>();
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [ok, setOk] = useState<boolean | undefined>();
+  const [status, setStatus] = useState<number | undefined>();
+
+  useEffect(() => {
+    const abortController = new AbortController();
+
+    (async () => {
+      setIsLoading(true);
+
+      const response = await fetch(url, {
+        method,
+        body,
+        signal: abortController.signal,
+      });
+
+      setOk(response.ok);
+      setStatus(response.status);
+
+      if (response.ok) {
+        const apiResult = await response.json();
+        setResult(apiResult);
+      }
+
+      setIsLoading(false);
+    })();
+
+    return () => {
+      abortController.abort();
+    };
+  }, [url, method, body]);
+
+  return { ok, result, isLoading, status };
+}
+
+interface Todo {
+  userId: number;
+  id: number;
+  title: string;
+  completed: boolean;
+}
+
+export default function PrivateHook() {
+  // 사용자 지정 훅 사용
+  const { isLoading, result, status, ok } = useFetch<Todo[]>("https://주소", {
+    method: "GET",
+  });
+
+  useEffect(() => {
+    if (isLoading) {
+      console.log("fetchResult >>", status);
+    }
+  }, [status, isLoading]);
+
+  return (
+    <div>
+      {ok
+        ? (result || []).map(({ userId, title }, index) => (
+            <div key={index}>
+              <p>{userId}</p>
+              <p>{title}</p>
+            </div>
+          ))
+        : null}
+    </div>
+  );
+}
+```
+
+</details>
+
+### 고차 컴포넌트
+
+- 고차 컴포넌트는 **컴포넌트 로직을 재사용**할 수 있게 해준다.
+
+#### React.memo
+
+- 부모 컴포넌트가 리렌더링되는 경우 자식 컴포넌트는 props 의 변화가 없어도 강제로 리렌더링이 발생하는데, 이는 성능상의 비효율이다
+- 이때, React.memo 를 사용하면 변경되지 않은 컴포넌트의 경우 memo 를 통해 기억하고 있는 컴포넌트 값을 반환하여 불필요한 리렌더링 작업을 생략할 수 있다
+- useMemo 를 사용하면 동일하게 사용이 가능하지만, 사용상의 혼선을 줄 수 있으므로 의도가 명확한 memo 를 사용하는 것이 좋다
+
+#### 고차 함수를 활용한 고차 컴포넌트
+
+- 단순히 값을 반환하거나 부수효과를 실행하는 사용자 정의 훅과 달리 HOC 패턴은 컴포넌트 전체를 감쌀 수 있기 때문에 더 큰 영향력을 행사한다.
+- `with` 접두어 사용하는 것을 권장한다.
+- 부수효과를 최소화 해야 한다.
+
+### 사용자 정의 훅과 고차 컴포넌트 중 무엇을 써야 할까?
+
+- **사용자 정의 훅이 필요한 경우**
+  - 사용자 정의 훅은 결국 부수 효과만을 발생 시키고, 렌더링은 해당 훅을 사용하는 컴포넌트에서 결정이 되므로 렌더링에 영향을 못끼친다.
+  - 따라서, 공통 로직을 격리하는 경우 또는 컴포넌트에 미치는 영향을 최소화 하고 훅을 개발자가 원하는 방향으로 사용하도록 강제하는 경우에 사용한다
+- **고차 컴포넌트를 사용해야 하는 경우**
+  - 사용자 정의 훅으로는 렌더링 결과물에 까지 영향을 미치기는 어렵기 때문에 공통 로직에 따라 결과물(렌더링 결과)이 달라지는 경우라면 고차 컴포넌를 사용하는 편이 좋다
+
+---
+
+## More about Hook Rules
