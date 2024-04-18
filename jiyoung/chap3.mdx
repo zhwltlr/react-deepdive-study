@@ -343,3 +343,234 @@ export default function PrivateHook() {
 ---
 
 ## More about Hook Rules
+
+### 주의사항
+
+1. 이름 규칙: 커스텀 훅의 이름은 'use'로 시작해야 한다. 이 규칙은 리액트의 lint 규칙에 포함되어 있으며, 규칙을 따르지 않으면 경고가 발생한다.
+2. 훅 호출 순서: 커스텀 훅 내부에서 다른 훅(내장 훅 또는 커스텀 훅)을 호출할 때는 항상 동일한 순서로 호출해야 한다. 이 규칙을 지키지 않으면 훅의 상태가 잘못된 순서로 업데이트되어 문제가 발생할 수 있다.
+
+### 일반 함수 대신에 커스텀 훅을 정의하는 이유
+
+- React 훅 활용 커스텀 훅은 React의 built-in 훅(useState, useEffect 등)을 직접 활용할 수 있다. 이를 통해 상태 관리와 Side Effect 처리가 용이해진다.
+- 상태 관리나 생명주기 로직을 재사용 가능한 함수로 만들고 싶다면, 커스텀 훅을 만들어야 한다.
+- 커스텀 훅 내부에서는 useState, useEffect 등의 React hooks를 자유롭게 사용할 수 있다.
+
+#### 상태 공유
+
+커스텀 훅을 사용하면 여러 컴포넌트 간에 상태를 공유할 수 있다. 이는 상태 관리 로직을 하나의 커스텀 훅으로 만들고, 이 훅을 필요한 컴포넌트에서 호출함으로써 이루어진다.
+
+<details>
+  <summary>useDarkMode</summary>
+  ```jsx
+    import { useState } from 'react';
+
+    const useDarkMode = () => {
+    const [isDark, setIsDark] = useState(false);
+
+    const toggleDarkMode = () => {
+    setIsDark(prevMode => !prevMode);
+    }
+
+    return [isDark, toggleDarkMode];
+    }
+
+    export default useDarkMode;
+
+    ```
+
+</details>
+
+#### 상태 격리
+
+상태를 특정 컴포넌트에 국한시켜 격리할 필요가 있을 수도 있다.
+
+<details>
+<summary>useModal</summary>
+```jsx
+    import { useState } from 'react';
+
+    const useModal = () => {
+    const [isOpen, setIsOpen] = useState(false);
+
+    const openModal = () => setIsOpen(true);
+    const closeModal = () => setIsOpen(false);
+
+    return [isOpen, openModal, closeModal];
+    }
+
+    ```
+
+</details>
+
+### 커스텀 Hook을 사용해야 하는 경우
+
+1. 코드 중복이 있더라도 작은 부분에 대해서는 커스텀 훅을 만들 필요가 없다.
+
+- 예를 들어 단순히 useState를 감싸는 useFormInput 훅은 불필요할 수 있다.
+
+2. 하지만 Effect를 작성할 때는 커스텀 훅으로 래핑하는 것이 좋다.
+
+- Effect는 React 외부 시스템과 동기화하거나 React에 기본 제공되지 않는 기능을 수행할 때 자주 사용된다. 커스텀 훅으로 래핑하면 의도와 데이터 흐름을 명확히 전달할 수 있다.
+
+  - React의 Effect는 데이터 가져오기, 수동으로 React 컴포넌트 내부 상태를 변경하는 등 부수효과를 다루기 위해 사용된다. 이러한 로직들은 React의 렌더링 순환 밖에서 실행되어야 하므로 Effect를 사용해야 한다.
+  - 커스텀 훅은 Effect의 의도와 데이터 흐름을 명확히 전달할 수 있다.
+
+  ```jsx
+  function ShippingForm({ country }) {
+    const [cities, setCities] = useState(null);
+    // This Effect fetches cities for a country
+    useEffect(() => {
+      let ignore = false;
+      fetch(`/api/cities?country=${country}`)
+        .then(response => response.json())
+        .then(json => {
+          if (!ignore) {
+            setCities(json);
+          }
+        });
+      return () => {
+        ignore = true;
+      };
+    }, [country]);
+
+    const [city, setCity] = useState(null);
+    const [areas, setAreas] = useState(null);
+    // This Effect fetches areas for the selected city
+    useEffect(() => {
+      if (city) {
+        let ignore = false;
+        fetch(`/api/areas?city=${city}`)
+          .then(response => response.json())
+          .then(json => {
+            if (!ignore) {
+              setAreas(json);
+            }
+          });
+        return () => {
+          ignore = true;
+        };
+      }
+    }, [city]);
+  ```
+
+  - 코드는 반복적이지만 서로 다른 데이터를 다루기 때문에 별도로 유지하는 것이 좋다.
+  - 구성요소 사이의 공통 논리를 `useDataHook`로 추출하여 구성요소를 단순화한다.
+
+  ```jsx
+  // 개선 코드
+  function useData(url) {
+    const [data, setData] = useState(null);
+    useEffect(() => {
+      if (url) {
+        let ignore = false;
+        fetch(url)
+          .then(response => response.json())
+          .then(json => {
+            if (!ignore) {
+              setData(json);
+            }
+          });
+        return () => {
+          ignore = true;
+        };
+      }
+    }, [url]);
+    return data;
+  }
+
+  function ShippingForm({ country }) {
+    const cities = useData(`/api/cities?country=${country}`);
+    const [city, setCity] = useState(null);
+    const areas = useData(city ? `/api/areas?city=${city}` : null);
+
+  ```
+
+1. **구체적이고 상위 수준의 사용 사례에 초점을 맞춰라**
+
+- useEffect API 자체를 대체하거나 간편하게 래핑하는 `lifecycle` 커스텀 훅(예: useMount, useEffectOnce, useUpdateEffect 등)은 피해야 한다.
+
+2. 이러한 `lifecycle` 훅은 React 패러다임에 잘 맞지 않으며, 린터가 문제를 감지하지 못해 버그를 야기할 수 있다. 대신 React API(useEffect)를 직접 사용하는 것이 좋다.
+
+3. 커스텀 훅은 높은 수준의 사용 사례를 제한하여 호출 코드를 더 선언적으로 만들어야 한다. 예를 들어 useChatRoom은 채팅방 연결만, useImpressionLog는 분석 로그 전송만 할 수 있도록 제한한다.
+
+<details>
+<summary>**호출 시 의도가 명확하지 않은 Bad Example**</summary>
+  ```jsx
+    // 🚫 Bad Example
+    function useRequest(url, options) {
+      const [data, setData] = useState(null);
+      const [error, setError] = useState(null);
+
+      useEffect(() => {
+        const fetchData = async () => {
+          try {
+            const response = await fetch(url, options);
+            const data = await response.json();
+            setData(data);
+          } catch (err) {
+            setError(err);
+          }
+        };
+
+        fetchData();
+      }, [url, options]);
+
+      return { data, error };
+
+    }
+    ```
+
+</details>
+
+<details>
+<summary>**특정 사용 사례(사용자 프로필 가져오기)에 초점을 맞춘 커스텀 훅**</summary>
+
+    ```jsx
+      // ✅ Good Example
+      function useGetUserProfile(userId) {
+        const [profile, setProfile] = useState(null);
+        const [error, setError] = useState(null);
+
+        useEffect(() => {
+          const fetchProfile = async () => {
+            try {
+              const response = await fetch(`/api/users/${userId}`);
+              const data = await response.json();
+              setProfile(data);
+            } catch (err) {
+              setError(err);
+            }
+          };
+
+          fetchProfile();
+        }, [userId]);
+
+        return { profile, error };
+      }
+    ```
+
+    - 호출 시 useGetUserProfile(123)과 같이 userId만 전달하면 되므로 의도가 명확하다.
+
+    ```jsx
+      function UserProfile({ userId }) {
+        const { profile, error } = useGetUserProfile(userId);
+
+        if (error) {
+          return <div>Error: {error.message}</div>;
+        }
+
+        if (!profile) {
+          return <div>Loading...</div>;
+        }
+
+        return (
+          <div>
+            <h1>{profile.name}</h1>
+            <p>Age: {profile.age}</p>
+            {/* ... */}
+          </div>
+        );
+      }
+    ```
+
+  </details>
