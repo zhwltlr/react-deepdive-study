@@ -1,7 +1,7 @@
 import Link from "next/link";
 
 const teamMembers = [
-  { id: 1, name: "김유권", path: "yugwon" },
+  { id: 1, name: "김혜린", path: "hyerin" },
   { id: 2, name: "박민형", path: "minhyung" },
   { id: 3, name: "박지영", path: "jiyoung" },
   { id: 4, name: "홍석현", path: "seokhyun" },
