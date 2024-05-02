@@ -10,7 +10,7 @@ description: 리액트와 상태 관리 라이브러리
   - UI
   - URL
   - form
-  - 서버에서 가져온 값
+  - 서버에서 가져온 값dddsasdasddㅂㅂㅂ
 
 1. 리액트 상태 관리의 역사
 
@@ -56,7 +56,7 @@ description: 리액트와 상태 관리 라이브러리
 - 전역 상태로 관리하기 위한 조건
   - 꼭 window나 global에 있어야 할 필요는 없지만 컴포넌트 외부 어딘가에 상태를 두고 여러 컴포넌트가 같이 쓸 수 있어야 한다.
   - 이 외부에 있는 상태를 사용하는 컴포넌트는 상태의 변화를 알아챌 수 있어야 하고 상태가 변화될 때마다 리렌더링이 일어나서 컴포넌트를 최신 상태값 기준으로 렌저링해야 한다. 이 상태 감지는 상태를 변경시키는 컴포넌트뿐만 아니라 이 상태를 참조하는 모든 컴포넌트에서 동일하게 작동해야한다.
-  - 상태가 원시값이 아닌 객체인 경우에 그 객체에 내가 감지하지 않는 값이 변했을 때 리렌더링이 발생해서는 안된다. 예를 들어 {a: 1, b: 2}라는 상태가 있으며 어느 컴포넌트에서 a를 2로 업데이트 했다고 가정해 보자. 이러한 객체 값의 변화가 단순히 b의 값을 참조하는 컴포넌트에서는 리렌더링을 일으켜서는 안 된다는 뜻이다.
+  - 상태가 원시값이 아닌 객체인 경우에 그 객체에 내가 감지하지 않는 값이 변했을 때 리렌더링이 발생해서는 안된다. 예를 들어 \{a: 1, b: 2}\라는 상태가 있으며 어느 컴포넌트에서 a를 2로 업데이트 했다고 가정해 보자. 이러한 객체 값의 변화가 단순히 b의 값을 참조하는 컴포넌트에서는 리렌더링을 일으켜서는 안 된다는 뜻이다.
 
 3. useState와 Context를 동시에 사용해 보기
 
@@ -143,3 +143,103 @@ description: 리액트와 상태 관리 라이브러리
 - 각 라이브러리별로 특징을 잘 파악하고, 현재 애플리케이션의 상황과 철학에 맞는 상태 관리 라이브러리를 적절하게 선택해 사용한다면 효율적인 애플리케이션을 만드는데 도움이 될 것이다.
 - 메인테이너가 많고 다운로드가 활발하며 이슈가 관리가 잘되고 있는 라이브러리를 선택하는 것이 좋다.
 - 리액트의 방향성에 따라 상태 관리 라이브러리도 리액트 변화에 발맞춰 꾸준히 대응해 줄 필요가 있다. 이러한 대응이 원활하지 않은 라이브러리를 선택했다면 애플리케이션의 장기적인 유지보수 및 개선에 어려움이 있을 수 있다.
+
+# 발표
+
+## 1. createContext
+
+### createContext(defaultValue)
+
+- createContext를 사용하면 컴포넌트가 제공(Provider)하거나 읽을 수 있는(useContext) 컨텍스트를 만들 수 있다.
+- 매개변수
+  - 컨텍스트를 읽는 컴포넌트 상위 트리에 일치하는 컨텍스트 provider가 없을 때 이 컨텍스트가 갖도록 할 값입니다.
+  - 의미 있는 기본값이 없다면 null을 지정
+  - 기본값은 “가장 마지막 수단”으로 사용되고 정적이며 시간이 지나도 절대 변경되지 않는다.
+- 반환값
+  - 컨텍스트 객체를 반환
+- 특징
+  - 컨텍스트 객체 자체는 어떠한 정보도 보유하지 않는다.
+  - 다른 컴포넌트가 읽거나 제공할 수 있는 컨텍스트를 나타낸다.
+  - 일반적으로 상위 컴포넌트에서 SomeContext.Provider를 사용해 컨텍스트 값을 지정하고, 하위 컴포넌트에서 useContext(SomeContext)를 호출해 컨텍스트 값을 읽는다.
+- context 속성
+  - SomeContext.Provider를 사용하면 컴포넌트에 컨텍스트 값을 제공할 수 있다.
+  - SomeContext.Consumer 는 컨텍스트 값을 읽는 또다른 방법이며 거의 사용되지 않는다.
+
+```tsx
+import { createContext } from "react";
+
+const ThemeContext = createContext("light");
+```
+
+### SomeContext.Provider
+
+- value props
+  - 이 값은 해당 provider 내에서 이 컨텍스트를 읽는 모든 컴포넌트에 전달하려는 값으로, 깊이에 상관없이 전달할 수 있다.
+  - 컨텍스트 값은 모든 타입이 될 수 있다.
+  - provider 내부에서 useContext(SomeContext)를 호출하는 컴포넌트는 그 위에 있는 가장 안쪽에 해당하는 컨텍스트 provider의 value를 받습니다.
+
+```tsx
+function App() {
+  const [theme, setTheme] = useState("light");
+  // ...
+  return (
+    <ThemeContext.Provider value={theme}>
+      <Page />
+    </ThemeContext.Provider>
+  );
+}
+```
+
+### [createContext 사용법 - 공식문서](https://react-ko.dev/reference/react/createContext#usage)
+
+<br />
+
+## 2. useContext
+
+- useContext를 통해 특정 컨텍스트를 읽을 수 있다.
+- 전달인자: 이전에 createContext로 생성한 context
+- 반환값
+  - context 값을 반환.
+  - 이 값은 호출한 컴포넌트에서 트리상 위에 있는 가장 가까운 SomeContext.Provider에 전달된 value
+  - 이러한 provider가 없는 경우 반환되는 값은 해당 context에 대해 createContext에 전달한 defaultValue
+  - 반환된 값은 항상 최신 값
+  - React는 context가 변경되면 context를 읽는 컴포넌트를 자동으로 리렌더링합니다.
+- 주의사항
+  - 컴포넌트의 useContext() 호출은 동일한 컴포넌트에서 반환된 provider의 영향을 받지 않는다. 해당 \<Context.Provider>\는 반드시 useContext() 호출을 수행하는 컴포넌트의 위에 있어야 한다.
+  - React는 변경된 value를 받는 Provider부터 시작해서 해당 context를 사용하는 자식들에 대해서까지 전부 자동으로 리렌더링한다. 이전 값과 다음 값은 Object.is로 비교합니다. memo로 리렌더링을 건너뛰어도 새로운 context 값을 수신하는 자식들을 막지는 못합니다.
+
+### [useContext 사용법 및 주의사항 - 공식문서](https://react-ko.dev/reference/react/useContext#usage)
+
+<br />
+
+## 3. reduce와 context로 확장하기
+
+- useReducer로 관리하는 상태를 props drilling 없이 하위 컴포넌트가 읽고 수정할 수 있도록한다.
+- 상태 관련 로직을 특정 파일에서 관리함으로써 컴포넌트의 관심사를 명확하게 할 수 있다.
+
+### [확장 하기 - 공식 문서](https://react-ko.dev/learn/scaling-up-with-reducer-and-context)
+
+### 요약
+
+- reducer와 context를 결합해서 컴포넌트가 상위 state를 읽고 수정할 수 있도록 할 수 있다.
+- state와 dispatch 함수를 자식 컴포넌트들에 제공하는 방법
+  - 두 개의 context를 생성(각각 state와 dispatch 함수를 위한 것)
+  - 하위 컴포넌트들에서 필요한 context를 사용
+- 더 나아가 하나의 파일로 합쳐서 컴포넌트들을 정리
+  - Context를 제공하는 TasksProvider 같은 컴포넌트 제작
+  - context를 사용하는 컴포넌트에서 context import 없이 사용할 수 있도록 useTasks와 useTasksDispatch 같은 사용자 Hook 생성
+- context-reducer 조합을 앱에 여러 개 만들 수 있다.
+
+<br />
+
+## 4. [context로 데이터 깊숙이 전달 - 공식문서](https://react-ko.dev/learn/passing-data-deeply-with-context)
+
+## 시간되면 읽어보기(https://react.vlpt.us/basic/22-context-dispatch.html)
+
+<br />
+
+## 참조
+
+- [createContext - 공식 문서](https://react.dev/reference/react/createContext)
+- [useContext - 공식 문서](https://react.dev/reference/react/useContext)
+- [Scaling Up with Reducer and Context - 공식 문서](https://react.dev/learn/scaling-up-with-reducer-and-context)
