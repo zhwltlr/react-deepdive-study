@@ -1,0 +1,57 @@
+---
+title: 09장 정리
+date: '2024/05/23'
+description: 모던 리액트 개발 도구로 개발 및 배포 환경 구축하기 - 도커라이즈 하기
+---
+
+## 도커라이즈
+
+- 도커란?
+    - 구축, 공유, 실행하는것을 쉽게 만들어주는 플랫폼
+    - 컨테이너 기반의 오픈소스 가상화 플랫폼
+    - 컨테이너화 하여 이미지화 한다
+    - 이미지를 레지스트리에 올려서 공유한다
+    - 개발 환경 일관화 및 필요시 이미지를 통해 롤백이 가능하다
+    - 도커 이미지를 통해 배포가 가능하다
+    
+- 도커 용어
+    - 이미지: 컨테이너 실행에 필요한 파일과 설정값 등을 포함하고 있는 것
+    - 컨테이너: 이미지를 실행한 상태, 즉 이미지가 메모리에 올라가 프로세스로 실행된 상태
+    - 레포지토리: 이미지를 저장하는 장소
+    - 태그: 이미지의 버전을 관리하기 위해 사용
+    - 도커파일: 이미지를 만들기 위한 설정 파일
+    - 레지스트리: 도커 이미지를 저장하는 공간
+
+- 도커 cli 용어
+    - docker build: 도커파일을 빌드하여 이미지를 생성
+    - docker push: 이미지를 레지스트리에 업로드
+    - docker tag: 이미지에 태그를 추가
+    - docker inspect: 이미지 또는 컨테이너의 세부 정보를 확인
+    - docker run: 컨테이너를 생성하고 실행
+    - docker ps: 실행중인 컨테이너 목록을 확인
+    - docker rm: 컨테이너를 삭제
+
+### 도커파일 작성
+
+- 운영체제 설정
+- Node.js 설치
+- npm ci
+- npm run build
+- 실행
+
+```dockerfile
+# base image
+FROM node:12.18.3-alpine3.16 as build
+
+workdir /app
+
+copy package.json ./package.json
+copy package-lock.json ./package-lock.json
+
+run npm ci
+
+copy . ./
+
+run npm run build
+```
+
