@@ -1,0 +1,221 @@
+---
+title: 09장 정리
+date: "2024/05/22"
+description: 모던 리액트 개발 도구로 개발 및 배포 환경 구축하기
+---
+
+## Github Actions
+
+- GitHub 내 어떤 이벤트(push, pull, merge ...)가 발생하면 해당 이벤트에 대해 정해진 동작을 실행하게 하는 도구
+
+## Github Actions 를 활용한 CI/CD 구축
+
+- Github Actions 는 Github 에서 제공하는 CI/CD 서비스
+- Github 저장소에 있는 코드를 기반으로 자동으로 테스트, 빌드, 배포 등을 수행할 수 있다
+- Github Actions 를 사용하면, CI/CD 를 위한 별도의 서버나 서비스를 구축할 필요가 없다
+- Github Actions 는 무료로 사용할 수 있으며, Github 저장소에 있는 코드를 기반으로 자동으로 테스트, 빌드, 배포 등을 수행할 수 있다
+
+### Github Actions 의 주요 개념
+
+- 워크플로우: 워크플로우는 GitHub 저장소에서 빌드, 테스트, 패키지, 릴리즈 또는 배포 등의 프로젝트를 자동화하는 설정 가능한 자동 프로세스
+
+- 러너(runner)
+
+  - GitHub Actions 러너 애플리케이션이 설치된 서버
+  - 러너는 사용 가능한 작업을 수신하고 한 번에 하나의 작업을 실행하며 진행 상황, 로그 및 결과를 나타냄
+  - 특별히 지정하지 않으면 공용 깃허브 액션 서버를 이용하며, 별도의 러너를 구축해 자체적으로 운영할 수도 있다.
+
+- 액션(action)
+
+  - 워크플로우의 가장 작은 이동 가능한 구성 요소
+  - 사용자는 자신의 액션을 생성하거나 정의할 수 있다.
+  - yaml 파일로 작성된 내용을 하나의 액션으로 볼 수 있다.
+
+- 이벤트(event)
+
+  - 워크플로우는 GitHub 플랫폼 이벤트 (푸시, 이슈 생성, 릴리즈 등) 및 워크플로우 내에서 발생하는 이벤트에 의해 트리거될 수 있다.
+  - 즉, 워크플로우가 다른 워크플로우를 트리거할 수 있음을 의미합니다.
+  - 특정 브랜치를 지정하는 이벤트도 가능하다.
+  - pull_request, push, release 등의 이벤트가 있다.
+
+- 작업(job)
+
+  - 워크플로우 실행은 하나 이상의 작업으로 구성
+  - 작업은 기본적으로 병렬로 실행
+  - 작업을 순차적으로 실행하려면 needs 키워드를 사용하여 다른 작업에 대한 종속성을 정의할 수 있다.
+
+- 단계(step)
+  - 작업은 단계로 구성
+  - 단계는 명령을 실행하거나 설정 작업을 실행하거나 저장소, 공개 저장소 또는 Docker 레지스트리에 게시된 액션을 실행
+  - 이 작업은 병렬로 일어나지 않는다.
+
+## 튜토리얼
+
+- GitHub 저장소의 .github/workflows 디렉터리에 yml 파일 생성
+
+```yml
+name: Node.js CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        node-version: [12.x, 14.x, 16.x]
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v2
+        with:
+          node-version: ${{ matrix.node-version }}
+      - run: npm ci
+      - run: npm run build --if-present
+      - run: npm test
+```
+
+<details>
+<summary>카카오 기술 블로그 참고</summary>
+```yml
+# test-every-push.yml
+
+# workflow의 이름. 나중에 해당 값을 사용할 수 있기 때문에 저는 유니크하게 사용합니다.
+
+name: 'test-every-push'
+
+# workflow를 동작하게하는 trigger입니다.
+
+# repository에 push 이벤트가 발생할 때마다 실행될 거예요.
+
+# push 말고도 여러 가지 이벤트들이 있겠죠?
+
+on: push
+
+# job은 사용자가 정한 플랫폼을 통해 step이라는 일련의 과정을 실행할 수 있어요.
+
+# 여러 개의 job을 사용할 수 있으며, 여러 개의 job을 사용할 때는 서로 정보도 교환할 수 있어요.
+
+# 그리고 각각 독립적으로도 실행할 수도 있어요.
+
+# 해당 예제는 간단한 workflow이므로 하나의 job만 갖도록 할게요.
+
+jobs:
+test: # job의 이름을 정해줍니다.
+name: Test lint, tsc, build # 저는 해당 job을 리눅스 환경에서 사용할 거예요. 다른 플랫폼이 올 수도 있겠죠?
+runs-on: ubuntu-latest
+
+    # job 안에는 step이라는 키워드가 옵니다. step은 shell script를 실행할 수도 있고,
+    # 누군가 만들어 놓은 Action을 사용할 수도 있어요.
+    steps:
+      # GitHub Actions는 해당 프로젝트를 리눅스 환경에 checkout하고 나서 실행을 합니다.
+      # 마치 우리가 브랜치를 만들 때 checkout하는 것처럼요. 꼭 필요합니다.
+      # 참고로 아래 코드는 누군가 만들어놓은 Action을 사용하는 겁니다.
+      # 만들어놓은 Action을 사용할 때는 uses라는 키워드를 사용해야 돼요.
+      - uses: actions/checkout@v2
+
+      # 해당 환경을 Node.js 위에서 실행하겠다고 명시해줍니다.
+      # 저희 프로젝트는 리액트니깐요!
+      # 마찬가지로 누군가 만들어 놓은 Action이겠죠?
+      - name: Use Node.js
+        uses: actions/setup-node@v2
+        # with라는 키워드로 Action에 값을 전달할 수 있어요.
+        # 이 Action은 node-version이라는 값을 받을 수 있네요?
+        # 아까 NODE_VERSION이라는 Secret을 만들었는데요,
+        # ${{ secrets.XXX }}라는 값으로 GitHub의 Secrets 값을 가져올 수 있어요.
+        # node-version은 16.13.1이 되겠죠?
+        with:
+          node-version: ${{ secrets.NODE_VERSION }}
+
+      # push할 때마다 npm을 install 해야될까요? (시간이 여간 많이 걸리는 게 아닐 텐데 ..)
+      # 아닙니다. 해당 프로젝트의 node_modules가 변했는지 안 변했는지를 이용해서
+      # 모듈 변화가 있을 때만 npm install을 해줄 수도 있어요.
+      - name: Cache node modules
+        # 그걸 제공하는 Action도 있네요? 갖다 쓰겠습니다.
+        uses: actions/cache@v2
+        # 해당 step을 대표하는 id를 설정할 수도 있어요.
+        # 해당 값은 뒤의 step에서 사용해볼게요.
+        id: cache
+        with:
+          # node_modules라는 폴더를 검사하여
+          path: node_modules
+          # 아래 키값으로 cache가 돼있는지 확인합니다.
+          key: npm-packages-${{ hashFiles('**/package-lock.json') }}
+
+      - name: Install Dependencies
+        # 위 step에서 node_modules에 대한 cache 검사를 했잖아요?
+        # 만약 모듈에 변한 게 있다면 `npm install`을 실행하고 아니면 해당 step을 건너뛰게 됩니다.
+        # if 키워드는 해당 스텝을 실행할지 말지를 결정할 수 있는 키워드예요.
+        # `steps.cache.outputs.cache-hit`이 값은 무엇일까요?
+        # 위 step에서 정했던 cache라는 id를 steps.cache로 가져올 수 있어요.
+        # cache라는 id 값을 가진 step에서는 cache-hit라는 output을 내뱉네요?
+        # 그걸로 cache가 hit 됐는지 안 됐는지를 알 수 있나봐요!
+        # 그 값이 true가 아닐 때만 npm install을 하겠죠?
+        if: steps.cache.outputs.cache-hit != 'true'
+        run: npm install
+
+      # 아래 로직은 저희가 만든 프로젝트의 lint, tsc, build를 테스트하는 곳이에요.
+      # run 키워드는 `npm start`같이 커맨트 명령어를 입력할 수 있게 해주는 키워드예요.
+      # `npm run xxx`를 사용하려면 pacakge.json에 해당 명령어에 대한 정의가 필요하겠죠?
+      # 저는 간단하게 아래 `사진-4`처럼 2개만 만들어봤어요.(실제로는 테스트 항목이 더 많고, 테스트를 실행할 수 있는 코드가 들어가야겠죠?)
+      - run: npm run lint
+        # `if: ${{ always() }}`라는 문법은 무엇일까요?
+        # 만약 `npm run lint`라는 곳에서 에러가 났다고 칩시다.
+        # 그러면 뒤의 tsc, build를 실행하지 않고 해당 workflow가 끝나버리게 됩니다.
+        # 뒤의 tsc, build에서도 에러가 있을지도 모르는데 말이죠.
+        # 하지만 ${{ always() }}라는 문법을 사용한다면
+        # `npm run lint`라는 곳에서 에러가 나도 뒤의 tsc, build까지 다 실행을 해보고 난 뒤 종료합니다.
+        # 그래서 모든 테스트 스크립트에 ${{ always() }}를 붙여줍니다.
+        if: ${{ always() }}
+      - run: npm run tsc
+        if: ${{ always() }}
+      - run: npm run build
+        if: ${{ always() }}
+
+```
+</details>
+
+- 워크플로우는 main 브랜치에 푸시나 풀 리퀘스트가 발생할 때 트리거 된다.
+- 매트릭스 전략을 사용하여 Node.js 12.x, 14.x, 16.x 버전에서 빌드와 테스트를 실행
+
+  - 매트릭스 전략(matrix strategy)은 GitHub Actions에서 여러 환경 또는 조건에 대해 동일한 작업을 실행할 수 있게 해주는 기능
+  - 다양한 운영 체제 환경에서 빌드 및 테스트할 때,여러 버전의 프로그래밍 언어나 도구에 대해 테스트할 때 유용하다
+
+- 순서
+  - 저장소 코드 체크아웃
+  - 지정된 Node.js 버전 설치
+  - npm ci 명령어를 통한 의존성 설치
+  - npm run build 명령어를 통한 프로젝트 빌드 (존재한다면)
+  - npm test 명령어를 통한 테스트 실행
+
+### 좋은 Github CI workflow?
+- 최소한의 비용으로 실행해야 한다: github actions은 빌드 시간 만큼 비용을 청구하므로 빌드 시간을 최소한으로 낮춰야 한다.
+- 효율적으로 동작해야 한다: workflow는 가능한 빨리 수행 되어서 성공 또는 실패 여부를 확인할 수 있어야 한다.
+- 잘 설계되어 있어야 한다: 각 모든 step에는 모두 목적이 있으며, 쓸데 없는 step이 없어야 한다.
+
+### Workflow with Frontend Project
+- lint
+- formatting
+- type checking
+- unit test
+- build
+
+이러한 방식의 워크플로우는 병렬로 실행되기 때문에 서로 상호 작용할 방법이 없다. 즉, 다른 워크 플로우의 실패를 다른 워크플로우의 중단으로 트리거할 수 없다.
+따라서 좋은 방법은 모든 워크플로우를 하나로 결합하는 것이다. 독립적인 워크플로우 였던 모든 태스를 하나의 워크 플로우로 통합한다면 이러한 문제를 해결할 수 있다.
+
+### GitHub에서 제공하는 기본 액션
+
+1. **checkout**: 이 액션은 워크플로우 실행을 위해 GitHub 저장소 코드를 체크아웃하는 것으로, 대부분의 워크플로우에서는 이 액션을 가장 먼저 실행
+2. **setup-node**: Node.js 환경을 설정하고 특정 버전의 Node.js를 설치
+3. **cache**: 워크플로우 실행 간에 파일을 캐싱하여 속도를 높인다. (주로 의존성 캐싱에 사용)
+4. **upload-artifact**: 워크플로우 실행 중 생성된 아티팩트(빌드 산출물, 로그 등)를 업로드
+5. **github-script**: GitHub API를 호출하거나 이슈, 풀 요청 등을 생성 및 업데이트
+
+
+```
