@@ -7,29 +7,29 @@ description: 모던 리액트 개발 도구로 개발 및 배포 환경 구축�
 ## 도커라이즈
 
 - 도커란?
-    - 구축, 공유, 실행하는것을 쉽게 만들어주는 플랫폼
-    - 컨테이너 기반의 오픈소스 가상화 플랫폼
-    - 컨테이너화 하여 이미지화 한다
-    - 이미지를 레지스트리에 올려서 공유한다
-    - 개발 환경 일관화 및 필요시 이미지를 통해 롤백이 가능하다
-    - 도커 이미지를 통해 배포가 가능하다
-    
+  - 구축, 공유, 실행하는것을 쉽게 만들어주는 플랫폼
+  - 컨테이너 기반의 오픈소스 가상화 플랫폼
+  - 컨테이너화 하여 이미지화 한다
+  - 이미지를 레지스트리에 올려서 공유한다
+  - 개발 환경 일관화 및 필요시 이미지를 통해 롤백이 가능하다
+  - 도커 이미지를 통해 배포가 가능하다
 - 도커 용어
-    - 이미지: 컨테이너 실행에 필요한 파일과 설정값 등을 포함하고 있는 것
-    - 컨테이너: 이미지를 실행한 상태, 즉 이미지가 메모리에 올라가 프로세스로 실행된 상태
-    - 레포지토리: 이미지를 저장하는 장소
-    - 태그: 이미지의 버전을 관리하기 위해 사용
-    - 도커파일: 이미지를 만들기 위한 설정 파일
-    - 레지스트리: 도커 이미지를 저장하는 공간
+
+  - 이미지: 컨테이너 실행에 필요한 파일과 설정값 등을 포함하고 있는 것
+  - 컨테이너: 이미지를 실행한 상태, 즉 이미지가 메모리에 올라가 프로세스로 실행된 상태
+  - 레포지토리: 이미지를 저장하는 장소
+  - 태그: 이미지의 버전을 관리하기 위해 사용
+  - 도커파일: 이미지를 만들기 위한 설정 파일
+  - 레지스트리: 도커 이미지를 저장하는 공간
 
 - 도커 cli 용어
-    - docker build: 도커파일을 빌드하여 이미지를 생성
-    - docker push: 이미지를 레지스트리에 업로드
-    - docker tag: 이미지에 태그를 추가
-    - docker inspect: 이미지 또는 컨테이너의 세부 정보를 확인
-    - docker run: 컨테이너를 생성하고 실행
-    - docker ps: 실행중인 컨테이너 목록을 확인
-    - docker rm: 컨테이너를 삭제
+  - docker build: 도커파일을 빌드하여 이미지를 생성
+  - docker push: 이미지를 레지스트리에 업로드
+  - docker tag: 이미지에 태그를 추가
+  - docker inspect: 이미지 또는 컨테이너의 세부 정보를 확인
+  - docker run: 컨테이너를 생성하고 실행
+  - docker ps: 실행중인 컨테이너 목록을 확인
+  - docker rm: 컨테이너를 삭제
 
 ### 도커파일 작성
 
@@ -42,16 +42,54 @@ description: 모던 리액트 개발 도구로 개발 및 배포 환경 구축�
 ```dockerfile
 # base image
 FROM node:12.18.3-alpine3.16 as build
+# FROM node:12.18.3-alpine3.16 as build: 이 명령어는 기반 이미지를 설정합니다.
+# 여기서는 node:12.18.3-alpine3.16 이미지를 기반으로 새 이미지를 생성하겠다는 의미입니다. as build는 이후 단계에서 이 이미지를 참조할 이름을 설정하는데 사용됩니다.
 
 workdir /app
-
+# 이 명령어는 Docker 컨테이너 내에서 작업 디렉토리를 /app으로 설정합니다. 이후의 명령어들은 이 디렉토리 내에서 실행됩니다.
 copy package.json ./package.json
 copy package-lock.json ./package-lock.json
-
+# 이 명령어들은 로컬 시스템의 package.json과 package-lock.json 파일을 컨테이너의 작업 디렉토리(/app)로 복사합니다.
 run npm ci
-
+# 이 명령어는 npm ci 명령을 실행하여 package-lock.json에 정의된 의존성들을 설치합니다.
 copy . ./
-
+# 이 명령어는 현재 디렉토리의 모든 파일과 디렉토리를 컨테이너의 작업 디렉토리(/app)로 복사합니다.
 run npm run build
+# 이 명령어는 npm run build 명령을 실행하여 애플리케이션을 빌드합니다. 이 명령은 package.json의 "scripts" 섹션에 정의된 "build" 스크립트를 실행합니다.
 ```
 
+- 도커 설치 및 실행하기
+
+  - 도커 설치
+    - https://docs.docker.com/get-docker/
+    - service docker start
+    - docker --version
+  - 도커 이미지 pull
+    - docker pull node:12.18.3-alpine3.16
+  - 도커 이미지 리스트 확인
+    - docker images
+  - 도커 이미지 삭제
+    - docker rmi node:12.18.3-alpine3.16
+  - 도커 이미지 푸시
+    - docker push node:12.18.3-alpine3.16
+  - 도커 이미지로 컨테이너 실행
+    - docker run -it --rm -p 3000:3000 node:12.18.3-alpine3.16 sh
+    - sudo docker run --name [컨테이너이름] -v [호스트경로]:[컨테이너경로] -p [호스트포트]:[컨테이너포트] -d 이미지:버전
+  - 도커 리스트 확인
+    - docker ps (실행중인 컨테이너 확인)
+    - docker ps -a (종료된 컨테이너까지 확인)
+  - 도커 컨테이너 로그 확인
+    - docker logs [컨테이너이름]
+  - 도커 컨테이너 내부 디렉토리 접근
+    - docker exec -it [컨테이너이름] sh
+  - 도커 컨테이너 종료
+    - docker stop [컨테이너이름]
+  - 도커 종료된 컨테이너 실행
+    - docker start [컨테이너이름]
+  - 도커 컨테이너 삭제
+    - docker rm [컨테이너이름]
+
+- dockerignore
+  - 도커파일에서 COPY 명령어를 사용할 때 불필요한 파일을 제외할 수 있다
+  - .dockerignore 파일을 생성하여 제외할 파일이나 디렉토리를 지정한다
+  - .gitignore와 동일하게 작성하면 된다
