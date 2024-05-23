@@ -1,0 +1,49 @@
+---
+title: 06장 정리
+date: "2024/05/09"
+description: 리액트 개발 도구로 디버깅하기
+---
+
+## 리액트 개발 도구
+
+- 리액트 팀에서 제공하는 개발 도구 react-dev-tools
+- 브라우저 확장 프로그램으로 설치하여 사용 가능
+
+### 컴포넌트 트리
+
+- 어플리케이션의 전체 트리 구조를 한눈에 보여준다
+- 상단 입력란에서는 정규식을 활용하여 검색이 가능하다
+- 함수 선언식 또는 표현식으로 선언되지 않은 컴포넌트는 개발자 도구를 통해 컴포넌트의 이름을 확인할 수 없는 문제가 있다
+- 아래의 코드로 실행하면 컴포넌트 명이 Anonymous, \_c 로 뜨게 된다
+
+```jsx
+const withSampleHOC = (Component) => {
+  return function () {
+    return <Component />;
+  };
+};
+
+const HOCComponent = withSampleHOC(() => <>HOCComponent</>);
+
+export default function DevTools() {
+  return <HOCComponent />;
+}
+```
+
+- 기명함수로 수정하여 함수명이 바로 나오게 해준다.
+
+```jsx
+const withNamedSampleHOC = (Component) => {
+  return function withNamedSampleHOC() {
+    return <Component />;
+  };
+};
+
+const NamedHOCComponent = withNamedSampleHOC(function NamedHOCComponent() {
+  return <>NamedHOCComponent</>;
+});
+```
+
+## 프로파일러
+
+- 리액트 트리가 아닌 리액트가 랜더링하는 과정에서 발생하는 상황을 확인하기 위한 도구

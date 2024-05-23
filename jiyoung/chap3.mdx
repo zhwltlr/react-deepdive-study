@@ -1,0 +1,576 @@
+---
+title: 03장 정리
+date: "2024/04/15"
+description: 리액트 훅 깊게 살펴보기
+---
+
+## 리액트의 모든 훅 파헤치기
+
+### useState
+
+- useState는 함수 컴포넌트에서 상태를 관리할 수 있게 해주는 훅이다.
+- useState는 배열을 반환하며 첫 번째 원소는 상태 값, 두 번째 원소는 상태를 설정하는 함수이다.
+
+#### useState 구현 살펴보기
+
+```bash
+function Component() {
+    let state = 'Hello';
+    function handleButtonClick() {
+        state = 'World';
+        console.log(state);
+    }
+  return (
+    <div>
+      <p>{state}</p>
+      <button onClick={() => handleButtonClick}>hi</button>
+    </div>
+  );
+}
+```
+
+- 위 코드는 버튼을 클릭했을 때 state가 'World'로 변경되는 것을 기대하지만, 실제로는 'Hello'로 출력된다.
+- **함수 컴포넌트는 매번 함수를 실행해 렌더링**이 일어나고, **함수 내부의 값은 함수가 실행될 때마다 다시 초기화** 한다.
+- useState 내부에 선언된 함수 setState가 함수의 실행이 종료된 이후(useState가 호출된 이후)에도 지역변수인 state를 계속 참조할 수 있다. (클로저)
+
+#### 게으른 초기화
+
+- useState의 초기값은 함수로 지정할 수 있다.
+
+  ```bash
+  const [counter, setCounter] = useState(() => {
+    Number.parseInt(localStorage.getItem('count') || 0);
+  });
+  ```
+
+- 위 코드는 컴포넌트가 렌더링될 때마다 localStorage를 조회하는 것이 아니라, **최초 렌더링 시에만 조회**한다.
+- 무거운 연산이 필요한 초기값을 지정할 때 사용하면 좋다.
+- `localStorage`, `sessionStorage`, `map`, `find`, `filter` 등을 사용할 때 유용하다.
+
+### useEffect
+
+#### useEffect란?
+
+- 애플리케이션 내 컴포넌트의 여러 값들을 활용해 동기적으로 부수 효과를 만드는 메커니즘
+  - 부수 효과 : 함수 내부에서 함수 외부의 상태를 변경하는 것
+- useEffect는 첫 번째 인자로 부수 효과 함수를 받는다.
+- useEffect는 두 번째 인자로 의존성 배열을 받는다.
+  - 의존성 배열 : 배열 내부의 값이 변경될 때만 부수 효과를 실행한다.
+  - 빈 배열을 넣으면 컴포넌트가 처음 렌더링될 때만 부수 효과를 실행한다.
+- 렌더링 할때마다 의존성에 있는 값을 보면서 이 의존성의 값이 이전과 다른게 하나라도 있으면 부수효과를 실행한다.
+
+#### 클린업 함수의 목적
+
+```jsx
+import React, { useEffect, useState } from "react";
+export default function App() {
+  const [counter, setCounter] = useState(0);
+  function handleClick() {
+    setCounter((prev) => prev + 1);
+  }
+
+  useEffect(() => {
+    function addMouseEvent() {
+      console.log("useEffect Counter", counter);
+    }
+
+    window.addEventListener("click", addMouseEvent);
+
+    return () => {
+      console.log("클린업", counter);
+      window.removeEventListener("click", addMouseEvent);
+    };
+  }, [counter]);
+
+  return (
+    <>
+      <h1>{counter}</h1>
+      <button onClick={handleClick}>+</button>
+    </>
+  );
+}
+```
+
+- 클린업 함수는 비록 새로운 값을 기반으로 렌더링 뒤에 실행되지만 _변경된 값을 읽는 것이 아니라_ **함수가 정의됐을 당시에 선언됐던 이전 값을 보고 실행**한다.
+- **이벤트 리스너를 추가할 때** : 이벤트 리스너를 추가하고 제거할 때 사용하여 메모리 누수를 방지한다.
+
+#### 의존성 배열
+
+- 의존성 배열이 없는 useEffect를 사용하는 이유?
+  - 클라이언트 사이드에서 실행되는 것을 보장한다.
+  - 일반 함수를 사용하면 서버사이드에서도 실행되기 때문에 함수 컴포넌트의 반환을 지연시킨다.
+
+#### useEffect를 사용할 때 주의점
+
+- **의존성 배열에 값을 넣지 않으면 무한 루프**에 빠질 수 있다.(가급적 사용하지 않는다.)
+- useEffect의 첫번째 인수에 함수명을 부여한다.
+  - useEffect의 목적을 명확히 하고 그 책임을 최소한으로 좁힌다.
+- 거대한 useEffect를 만들지 말고 불필요한 외부 함수를 만들지 않는다.
+- **비동기 함수를 사용할 때** : useEffect 내부에서 비동기 함수를 사용할 때는 **async 함수를 사용하지 않고** 함수 내부에서 async 함수를 호출한다.
+  - 비동기 useEffect는 state의 경쟁 상태를 야기할 수 있고 클린업 함수의 실행 순서도 보장할 수 없기 때문에 useEffect의 인수로 받지 않는다.
+
+### useMemo
+
+- useMemo는 함수의 결과를 저장해 두었다가 같은 인자가 들어오면 이전에 계산한 값을 반환하는 기법으로 리액트에서 발생하는 렌더링을 최소화하기 위해 사용된다.
+- 첫번째 인자로 어떤 값을 반환하는 생성 함수를 받고, 두번째 인자로 의존성 배열을 받는다.
+- 의존성 배열에 있는 값이 변경되지 않으면 이전 값을 반환한다.
+
+### useCallback
+
+- useCallback은 useMemo와 비슷하지만, **함수를 저장**해 두었다가 **의존성 배열의 값이 변경되지 않으면 이전 함수를 반환**한다.
+- 첫번째 인자로 함수를 받고, 두번째 인자로 의존성 배열을 받는다.
+- 함수의 재생성을 막아 불필요한 리소스 또는 리렌더링을 방지하고 싶을 때 사용한다.
+
+### useRef
+
+- useRef는 **DOM 요소에 접근**하거나 **컴포넌트 내부에서 값을 저장**할 때 사용한다.
+- 반환값인 객체 내부에 있는 current로 값에 접근 또는 변경할 수 있다.
+- 값이 변하더라도 렌더링을 발생시키지 않는다.
+
+  ```jsx
+  import React, { useEffect, useRef, useState } from "react";
+
+  function usePrevious(value) {
+    const ref = useRef();
+
+    // value 가 변경되면, value 값을 ref에 넣어둔다
+    useEffect(() => {
+      ref.current = value;
+    }, [value]);
+
+    return ref.current;
+  }
+
+  export default function SomeComponent() {
+    const [counter, setCounter] = useState(0);
+    const previousCounter = usePrevious(counter);
+
+    const handleClick = () => {
+      setCounter((prev) => prev + 1);
+    };
+
+    return (
+      <div>
+        <button onClick={handleClick}>
+          {counter} / {previousCounter}
+        </button>
+      </div>
+    );
+  }
+  ```
+
+### useContext
+
+#### Context란?
+
+- props drilling을 완화하기 위해 선언한 하위 컴포넌트에 바로 값을 보내기 위한 방법
+
+#### Context 를 사용할 수 있게 해주는 useContext 훅
+
+- useContext는 Context 객체를 받아 해당 Context의 Provider로부터 값을 받아온다.
+- 여러개가 선언 된 경우, 가까이 있는 Provider 의 값을 가져온다
+- 컴포넌트가 복잡해 질 수록, Context 가 존재하지 않아 에러가 날 수 있으니 유의해서 사용이 필요하다
+
+#### useContext 사용할 때 주의할 점
+
+- useContext 를 사용하면 Provider 에 의존성을 가지게 되므로 컴포넌트의 재활용이 어려워 진다
+- 그렇다고 최상위 컴포넌트에 모든 컨텍스트를 넣는 것은 불필요한 리소스 낭비가 된다
+- useContext 는 주입된 상태를 사용할 수 있을 뿐, 렌더링 최적화 등의 기능은 제공하지 않는다.
+
+### useReducer
+
+- useReducer는 상태를 관리하는 훅 중 하나로, useState와 비슷하게 동작한다.
+- useReducer는 상태를 업데이트하는 로직을 컴포넌트 밖으로 분리할 수 있어서, 컴포넌트 내부에서 상태 업데이트 로직을 작성하는 것보다 더 복잡한 상태 로직을 작성할 때 유용하다.
+- 반환값
+  - state : 현재 상태
+  - dispatcher : action을 발생시키는 함수
+- 인수
+  - reducer : 기본 action을 정의하는 함수
+  - initialState : 초기 상태
+  - init : 초기 값을 지연해서 생성시키고 싶을 때 사용하는 함수(optional)
+
+### useImperativeHandle
+
+#### React.forwardRef
+
+- React.forwardRef는 ref를 전달할 수 있게 해주는 함수이다.
+- useRef 로 HTML 요소를 props 로 보내는 경우, props 명을 ref 로 사용할 경우 리액트의 예약어와 충돌이 나는 문제가 발생한다.
+- 물론 다른 props 명을 사용하여 전달하면 문제가 없지만, forwardRef 를 사용하면 좀 더 명확하게 사용이 가능하다.
+
+#### useImperativeHandle
+
+- 부모에서 넘겨 받은 ref 를 원하는 대로 수정할 수 있는 훅
+- 부모로 부터 받은 ref 요소에 자식 컴포넌트에서 임의로 동작등을 추가가 가능하고 이를 바로 부모에 적용이 가능해진다
+- 반드시 부모 컴포넌트에서 모든 것을 정의하여 내려줄 필요가 없다는 장점이 생긴다
+
+### useLayoutEffect
+
+- useEffect와 비슷하지만, 렌더링 이후에 동기적으로 실행된다.
+
+### useDebugValue
+
+- 커스텀 훅을 사용할 때 디버깅을 위해 사용한다.
+- useDebugValue의 두 번째 인자로 포맷팅 함수를 넘겨 디버깅을 용이하게 한다.
+
+  ```jsx
+  function useCustomHook() {
+    const [state, setState] = useState(0);
+    useDebugValue(state, (state) => `state: ${state}`);
+    return [state, setState];
+  }
+  ```
+
+- useDebugValue는 개발자 도구에서 커스텀 훅의 이름을 보여준다.
+
+### 훅의 규칙
+
+- 훅은 컴포넌트의 최상위에서만 호출해야 한다.
+- 훅은 함수 컴포넌트 또는 커스텀 훅 내부에서만 호출해야 한다.
+- 훅은 조건문, 반복문, 중첩 함수 내부에서 호출하면 안된다.
+
+## 사용자 정의 훅과 고차 컴포넌트 중 무엇을 써야 할까?
+
+### 사용자 정의 훅
+
+- 사용자 정의 훅은 **컴포넌트 로직을 재사용**할 수 있게 해준다.
+
+<details>
+<summary>useFetch 예시</summary>
+
+```jsx
+import { useEffect, useState } from "react";
+
+function useFetch<T>(
+  url: string,
+  { method, body }: { method: string; body?: XMLHttpRequestBodyInit }
+) {
+  const [result, setResult] = useState<T | undefined>();
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [ok, setOk] = useState<boolean | undefined>();
+  const [status, setStatus] = useState<number | undefined>();
+
+  useEffect(() => {
+    const abortController = new AbortController();
+
+    (async () => {
+      setIsLoading(true);
+
+      const response = await fetch(url, {
+        method,
+        body,
+        signal: abortController.signal,
+      });
+
+      setOk(response.ok);
+      setStatus(response.status);
+
+      if (response.ok) {
+        const apiResult = await response.json();
+        setResult(apiResult);
+      }
+
+      setIsLoading(false);
+    })();
+
+    return () => {
+      abortController.abort();
+    };
+  }, [url, method, body]);
+
+  return { ok, result, isLoading, status };
+}
+
+interface Todo {
+  userId: number;
+  id: number;
+  title: string;
+  completed: boolean;
+}
+
+export default function PrivateHook() {
+  // 사용자 지정 훅 사용
+  const { isLoading, result, status, ok } = useFetch<Todo[]>("https://주소", {
+    method: "GET",
+  });
+
+  useEffect(() => {
+    if (isLoading) {
+      console.log("fetchResult >>", status);
+    }
+  }, [status, isLoading]);
+
+  return (
+    <div>
+      {ok
+        ? (result || []).map(({ userId, title }, index) => (
+            <div key={index}>
+              <p>{userId}</p>
+              <p>{title}</p>
+            </div>
+          ))
+        : null}
+    </div>
+  );
+}
+```
+
+</details>
+
+### 고차 컴포넌트
+
+- 고차 컴포넌트는 **컴포넌트 로직을 재사용**할 수 있게 해준다.
+
+#### React.memo
+
+- 부모 컴포넌트가 리렌더링되는 경우 자식 컴포넌트는 props 의 변화가 없어도 강제로 리렌더링이 발생하는데, 이는 성능상의 비효율이다
+- 이때, React.memo 를 사용하면 변경되지 않은 컴포넌트의 경우 memo 를 통해 기억하고 있는 컴포넌트 값을 반환하여 불필요한 리렌더링 작업을 생략할 수 있다
+- useMemo 를 사용하면 동일하게 사용이 가능하지만, 사용상의 혼선을 줄 수 있으므로 의도가 명확한 memo 를 사용하는 것이 좋다
+
+#### 고차 함수를 활용한 고차 컴포넌트
+
+- 단순히 값을 반환하거나 부수효과를 실행하는 사용자 정의 훅과 달리 HOC 패턴은 컴포넌트 전체를 감쌀 수 있기 때문에 더 큰 영향력을 행사한다.
+- `with` 접두어 사용하는 것을 권장한다.
+- 부수효과를 최소화 해야 한다.
+
+### 사용자 정의 훅과 고차 컴포넌트 중 무엇을 써야 할까?
+
+- **사용자 정의 훅이 필요한 경우**
+  - 사용자 정의 훅은 결국 부수 효과만을 발생 시키고, 렌더링은 해당 훅을 사용하는 컴포넌트에서 결정이 되므로 렌더링에 영향을 못끼친다.
+  - 따라서, 공통 로직을 격리하는 경우 또는 컴포넌트에 미치는 영향을 최소화 하고 훅을 개발자가 원하는 방향으로 사용하도록 강제하는 경우에 사용한다
+- **고차 컴포넌트를 사용해야 하는 경우**
+  - 사용자 정의 훅으로는 렌더링 결과물에 까지 영향을 미치기는 어렵기 때문에 공통 로직에 따라 결과물(렌더링 결과)이 달라지는 경우라면 고차 컴포넌를 사용하는 편이 좋다
+
+---
+
+## More about Hook Rules
+
+### 주의사항
+
+1. 이름 규칙: 커스텀 훅의 이름은 'use'로 시작해야 한다. 이 규칙은 리액트의 lint 규칙에 포함되어 있으며, 규칙을 따르지 않으면 경고가 발생한다.
+2. 훅 호출 순서: 커스텀 훅 내부에서 다른 훅(내장 훅 또는 커스텀 훅)을 호출할 때는 항상 동일한 순서로 호출해야 한다. 이 규칙을 지키지 않으면 훅의 상태가 잘못된 순서로 업데이트되어 문제가 발생할 수 있다.
+
+### 일반 함수 대신에 커스텀 훅을 정의하는 이유
+
+- React 훅 활용 커스텀 훅은 React의 built-in 훅(useState, useEffect 등)을 직접 활용할 수 있다. 이를 통해 상태 관리와 Side Effect 처리가 용이해진다.
+- 상태 관리나 생명주기 로직을 재사용 가능한 함수로 만들고 싶다면, 커스텀 훅을 만들어야 한다.
+- 커스텀 훅 내부에서는 useState, useEffect 등의 React hooks를 자유롭게 사용할 수 있다.
+
+#### 상태 공유
+
+커스텀 훅을 사용하면 여러 컴포넌트 간에 상태를 공유할 수 있다. 이는 상태 관리 로직을 하나의 커스텀 훅으로 만들고, 이 훅을 필요한 컴포넌트에서 호출함으로써 이루어진다.
+
+<details>
+  <summary>useDarkMode</summary>
+  ```jsx
+    import { useState } from 'react';
+
+    const useDarkMode = () => {
+    const [isDark, setIsDark] = useState(false);
+
+    const toggleDarkMode = () => {
+    setIsDark(prevMode => !prevMode);
+    }
+
+    return [isDark, toggleDarkMode];
+    }
+
+    export default useDarkMode;
+
+    ```
+
+</details>
+
+#### 상태 격리
+
+상태를 특정 컴포넌트에 국한시켜 격리할 필요가 있을 수도 있다.
+
+<details>
+<summary>useModal</summary>
+```jsx
+    import { useState } from 'react';
+
+    const useModal = () => {
+    const [isOpen, setIsOpen] = useState(false);
+
+    const openModal = () => setIsOpen(true);
+    const closeModal = () => setIsOpen(false);
+
+    return [isOpen, openModal, closeModal];
+    }
+
+    ```
+
+</details>
+
+### 커스텀 Hook을 사용해야 하는 경우
+
+1. 코드 중복이 있더라도 작은 부분에 대해서는 커스텀 훅을 만들 필요가 없다.
+
+- 예를 들어 단순히 useState를 감싸는 useFormInput 훅은 불필요할 수 있다.
+
+2. 하지만 Effect를 작성할 때는 커스텀 훅으로 래핑하는 것이 좋다.
+
+- Effect는 React 외부 시스템과 동기화하거나 React에 기본 제공되지 않는 기능을 수행할 때 자주 사용된다. 커스텀 훅으로 래핑하면 의도와 데이터 흐름을 명확히 전달할 수 있다.
+
+  - React의 Effect는 데이터 가져오기, 수동으로 React 컴포넌트 내부 상태를 변경하는 등 부수효과를 다루기 위해 사용된다. 이러한 로직들은 React의 렌더링 순환 밖에서 실행되어야 하므로 Effect를 사용해야 한다.
+  - 커스텀 훅은 Effect의 의도와 데이터 흐름을 명확히 전달할 수 있다.
+
+  ```jsx
+  function ShippingForm({ country }) {
+    const [cities, setCities] = useState(null);
+    // This Effect fetches cities for a country
+    useEffect(() => {
+      let ignore = false;
+      fetch(`/api/cities?country=${country}`)
+        .then(response => response.json())
+        .then(json => {
+          if (!ignore) {
+            setCities(json);
+          }
+        });
+      return () => {
+        ignore = true;
+      };
+    }, [country]);
+
+    const [city, setCity] = useState(null);
+    const [areas, setAreas] = useState(null);
+    // This Effect fetches areas for the selected city
+    useEffect(() => {
+      if (city) {
+        let ignore = false;
+        fetch(`/api/areas?city=${city}`)
+          .then(response => response.json())
+          .then(json => {
+            if (!ignore) {
+              setAreas(json);
+            }
+          });
+        return () => {
+          ignore = true;
+        };
+      }
+    }, [city]);
+  ```
+
+  - 코드는 반복적이지만 서로 다른 데이터를 다루기 때문에 별도로 유지하는 것이 좋다.
+  - 구성요소 사이의 공통 논리를 `useDataHook`로 추출하여 구성요소를 단순화한다.
+
+  ```jsx
+  // 개선 코드
+  function useData(url) {
+    const [data, setData] = useState(null);
+    useEffect(() => {
+      if (url) {
+        let ignore = false;
+        fetch(url)
+          .then(response => response.json())
+          .then(json => {
+            if (!ignore) {
+              setData(json);
+            }
+          });
+        return () => {
+          ignore = true;
+        };
+      }
+    }, [url]);
+    return data;
+  }
+
+  function ShippingForm({ country }) {
+    const cities = useData(`/api/cities?country=${country}`);
+    const [city, setCity] = useState(null);
+    const areas = useData(city ? `/api/areas?city=${city}` : null);
+
+  ```
+
+1. **구체적이고 상위 수준의 사용 사례에 초점을 맞춰라**
+
+- useEffect API 자체를 대체하거나 간편하게 래핑하는 `lifecycle` 커스텀 훅(예: useMount, useEffectOnce, useUpdateEffect 등)은 피해야 한다.
+
+2. 이러한 `lifecycle` 훅은 React 패러다임에 잘 맞지 않으며, 린터가 문제를 감지하지 못해 버그를 야기할 수 있다. 대신 React API(useEffect)를 직접 사용하는 것이 좋다.
+
+3. 커스텀 훅은 높은 수준의 사용 사례를 제한하여 호출 코드를 더 선언적으로 만들어야 한다. 예를 들어 useChatRoom은 채팅방 연결만, useImpressionLog는 분석 로그 전송만 할 수 있도록 제한한다.
+
+<details>
+<summary>**호출 시 의도가 명확하지 않은 Bad Example**</summary>
+  ```jsx
+    // 🚫 Bad Example
+    function useRequest(url, options) {
+      const [data, setData] = useState(null);
+      const [error, setError] = useState(null);
+
+      useEffect(() => {
+        const fetchData = async () => {
+          try {
+            const response = await fetch(url, options);
+            const data = await response.json();
+            setData(data);
+          } catch (err) {
+            setError(err);
+          }
+        };
+
+        fetchData();
+      }, [url, options]);
+
+      return { data, error };
+
+    }
+    ```
+
+</details>
+
+<details>
+<summary>**특정 사용 사례(사용자 프로필 가져오기)에 초점을 맞춘 커스텀 훅**</summary>
+
+    ```jsx
+      // ✅ Good Example
+      function useGetUserProfile(userId) {
+        const [profile, setProfile] = useState(null);
+        const [error, setError] = useState(null);
+
+        useEffect(() => {
+          const fetchProfile = async () => {
+            try {
+              const response = await fetch(`/api/users/${userId}`);
+              const data = await response.json();
+              setProfile(data);
+            } catch (err) {
+              setError(err);
+            }
+          };
+
+          fetchProfile();
+        }, [userId]);
+
+        return { profile, error };
+      }
+    ```
+
+    - 호출 시 useGetUserProfile(123)과 같이 userId만 전달하면 되므로 의도가 명확하다.
+
+    ```jsx
+      function UserProfile({ userId }) {
+        const { profile, error } = useGetUserProfile(userId);
+
+        if (error) {
+          return <div>Error: {error.message}</div>;
+        }
+
+        if (!profile) {
+          return <div>Loading...</div>;
+        }
+
+        return (
+          <div>
+            <h1>{profile.name}</h1>
+            <p>Age: {profile.age}</p>
+            {/* ... */}
+          </div>
+        );
+      }
+    ```
+
+  </details>
