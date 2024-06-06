@@ -1,0 +1,213 @@
+---
+title: 11장 정리
+date: "2024/06/06"
+description: Next.js 13과 리액트 18
+---
+
+# 발표
+
+## RSC vs RCC
+
+- React Server Component(줄여서 RSC)는 React18부터 도입된 개념
+- 13 버전 이전에 사용하던 모든 컴포넌트가 클라이언트 컴포넌트
+- 서버 컴포넌트와 클라이언트 컴포넌트의 가장 큰 차이점은 컴포넌트가 렌더링되는 위치(서버 vs 클라이언트)
+- 서버 컴포넌트는 서버에서 한차례 해석된 이후 클라이언트로 전달되고, 클라이언트 컴포넌트는 클라이언트가 js 번들을 다운로드 받은 후 해석
+
+![RSC vs RCC](https://velog.velcdn.com/images/2ast/post/226b2cd3-4cb5-47bf-b52c-f0087b4acc3b/image.png)
+
+- RSC와 RCC를 상황에 맞게 사용하는 것이 중요
+
+## RSC 동작 방식
+
+- RSC, RCC 혼합 트리
+
+![RSC, RCC 혼합 트리](https://velog.velcdn.com/images/2ast/post/465f8024-69c3-47ee-8b6f-1ee3d75b4fda/image.png)
+
+- 사용자가 페이지를 보기 위해 서버로 요청을 날리면 서버는 컴포넌트 트리를 root부터 실행하며 직렬화된 json 형태로 재구성
+
+```
+M1:{"id":"./src/ClientComponent.client.js","chunks":["client1"],"name":""}
+S2:"react.suspense"
+J0:["$","@1",null,{"children":[["$","span",null,{"children":"Hello from server land"}],["$","$2",null,{"fallback":"Loading tweets...","children":"@3"}]]}]
+M4:{"id":"./src/Tweet.client.js","chunks":["client8"],"name":""}
+J3:["$","ul",null,{"children":[["$","li",null,{"children":["$","@4",null,{"tweet":{...}}}]}],["$","li",null,{"children":["$","@4",null,{"tweet":{...}}}]}]]}]
+```
+
+> 주의할 점
+
+> 모든 객체를 직렬화할 수는 없다. 대표적으로 function은 직렬화가 불가능한 객체다. function이 실행코드와 실행 컨텍스트를 모두 포함하는 개념이기 때문인데, 함수는 자신이 선언된 스코프에 대한 참조를 유지하고, 그 시점의 외부 변수에 대한 참조를 기억하고 있다.
+
+```js
+const a = 100;
+
+const sample = () => {
+  console.log(a);
+};
+
+sample(); //100
+```
+
+> 함수의 실행 컨텍스트, 스코프, 클로저까지 직렬화할 수는 없기 때문에 function은 직렬화가 불가능한 객체로 분류
+
+- 직렬화 과정은 모든 서버 컴포넌트를 실행하여 json 객체 형태의 트리로 재구성할 때까지 진행
+
+```
+<div style={{backgroundColor:'green'}}>hello world</div>
+
+> React.createElement(div,{style:{backgroundColor:'green'}},"hello world")
+
+> {
+  $$typeof: Symbol(react.element),
+  type: "div",
+  props: { style:{backgroundColor:"green"}, children:"hello world" },
+  ...
+} // 이런 형태로 모든 컴포넌트를 순차적으로 실행
+```
+
+- 이 과정을 모든 컴포넌트에 대하여 진행하지 않고 RCC일 경우 건너뛰게 된다.
+- 단, RCC를 서버에서 해석하지 않는다면 실제 컴포넌트 트리와 괴리가 생기게 되므로 RCC의 경우 직접 해석하는 것이 아니라 placeholder를 대신 배치
+
+```
+{
+  $$typeof: Symbol(react.element),
+  type: {
+    $$typeof: Symbol(react.module.reference),
+    name: "default", //export default를 의미
+    filename: "./src/ClientComponent.js" //파일 경로
+  },
+  props: { children: "some children" },
+}
+```
+
+- 함수를 직접 참조하는 것이 아니라 “module reference” 라고 하는 새로운 타입을 적용하고, 해당 컴포넌트의 경로를 명시함으로써 직렬화를 우회
+
+- 직렬화 작업을 마친 후 생성된 JSON Tree 도식화
+
+![직렬화 작업을 마친 후 생성된 JSON Tree 도식화](https://velog.velcdn.com/images/2ast/post/7ef55ef0-4bef-417d-9e5f-08342345346f/image.png)
+
+- 도출된 결과물을 처리하는 과정
+
+  - 도출된 결과물을 Stream 형태로 클라이언트가 전달받음
+  - 함께 다운로드한 js bundle을 참조해 module reference 타입이 등장할 때마다 RCC를 렌더링해서 빈 공간을 채움
+  - DOM에 반영하면 실제 화면에 컨텐츠가 보인다.
+
+- 브라우저에서 재구성된 react tree
+
+![브라우저에서 재구성된 react tree](https://velog.velcdn.com/images/2ast/post/5782bbd3-8caa-4f2f-8681-c29a6430a3bd/image.png)
+
+## RSC의 제약사항
+
+1.  RSC에서 RCC로 function과 같이 직렬화 불가능한 객체를 prop으로 넘겨줄 수 없다.
+    - RSC는 서버에서 해석되어 직렬화된 JSON 형태로 변환
+    - 위의 특성에 의해 서버컴포넌트를 설명하는 모든 요소는 "직렬화가 가능해야 한다"는 전제조건이 붙음
+    - 만약 RSC가 child에게 function을 prop으로 넘겨주면 아래 코드와 같이 JSON에 함수를 전달했다는 사실이 명시되어야 하므로, 에러가 발생할 수 있음
+    ```
+     {
+     $$typeof: Symbol(react.element),
+     type: "div",
+     props: {
+             children: {
+             $$typeof: Symbol(react.element),
+             type: {
+                 $$typeof: Symbol(react.module.reference),
+                 name: "default",
+                 filename: "./src/ClientComponent.js"
+             },
+             props: {callback:function}, // 이처럼 JSON에 function이 명시되어야만 한다.
+             ...
+             }
+         },
+     ...
+     }
+    ```
+2.  RCC는 RSC를 직접 return해줄 수 없으며, 반드시 children prop의 형태로 넘겨주어야 한다.
+
+    - 서버에서 모든 RSC가 순차적으로 실행되며, 중간에 RCC를 만나면 placeholder로 표시해두고 넘어감.
+    - 즉, RCC는 실행되지 않기 때문에 RCC 내부에서 반환되는 RSC 또한 서버 컴포넌트임에도 불구하고 서버에서 실행되지 못할경우 해당 RSC는 RCC와 동일하게 클라이언트에서 동작하게 된다.
+    - 하지만 children prop을 통해 RSC를 넘기게 되면, 사실상 공통 부모가 렌더링 되는 시점에 RSC가 실행이 되고, 그 결과값을 children으로 전달할 수 있다.
+
+    ```tsx
+     function ParentClientComponent({children}) {
+         return <div onChange={...}>{children}</div>;
+     }
+
+     function ChildServerComponent() {
+         return <div>server component</div>;
+     }
+
+     function ContainerServerComponent() {
+         return <ParentClientComponent>
+             ChildServerComponent/>
+         </ParentClientComponent>;
+     }
+    ```
+
+    - `ChildServerComponent`는 `ParentClientComponent`의 자식 컴포넌트이지만, 사실상`ContainerServerComponent`를 공통부모로 갖고있음
+    - 그러므로 `ContainerServerComponent`가 렌더링되는 시점에 `ChildServerComponent`도 함께 렌더링되어 그 결과값이 `ParentClientComponent`에 넘겨지고 있음
+    - 직렬화 결과
+
+      ```
+      {
+        // The ClientComponent element placeholder with "module reference"
+        $$typeof: Symbol(react.element),
+        type: {
+            $$typeof: Symbol(react.module.reference),
+            name: "default",
+            filename: "./src/ParentClientComponent.js"
+        },
+        props: {
+            children: {
+                $$typeof: Symbol(react.element),
+                type: "div",
+                props: {
+                    children: "server component"
+                }
+            }
+        }
+      }
+      ```
+
+## RSC vs SSR(Next.js의 SSR)
+
+- RSC와 SSR은 서버에서 처리한다는 공통점 외에는 각각 해결하고자하는 목표도 다르고, 일어나는 시점과 최종 산출물도 다른 완전히 별개의 개념(일어나는 시점이 각각 언제일까?)
+- 따라서 반드시 둘 중 하나를 선택할 필요도 없고 필요에 따라 RSC와 SSR을 함께 사용하면 큰 시너지를 낼 수도 있다.
+- 작성한 소스코드가 브라우저에 보여지기 위해서는 우선 컴포넌트가 실행되어 데이터가 해석되어야하고, 그 해석된 데이터가 다시 html로 변환하는 과정을 거쳐야한다. RSC는 이중 전자에 해당하는 단계에 관여하고, SSR은 후자에 관여
+
+## RSC의 장점
+
+- Zero Bundle Size
+
+  - RSC는 서버에서 이미 모두 실행된 후 직렬화된 JSON 형태로 전달되기 때문에 어떠한 bundle도 필요하지 않다.
+  - 즉, RSC의 컴포넌트 소스파일 뿐만아니라, RSC에서만 사용하는 외부 라이브러리의 경우에도 번들에 포함될 필요가 없기 때문에 번들사이즈를 획기적으로 감량할 수 있다.
+  - 위의 특징에 의해 Next의 TTI(Time To Interactive) 개선에 크게 기여
+  - Next에서 SSR을 사용한다고 하더라도 초기 로딩속도에 이점이 있을 뿐 CSR과 동일한 사이즈의 js 번들을 다운받아야하기 때문에 TTI는 여전히 CSR 대비 큰 메리트가 없었지만 RSC를 도입하면 다운받아야하는 번들 사이즈가 줄어들게 되므로, TTI에 개선에 도움
+
+- No More getServerSideProps / getStaticProps (app directory)
+
+  - 기존 next에서는 getServerSideProps / getStaticProps라는 함수를 이용해서 서버에 접근
+  - RSC는 그 자체가 서버에서 렌더링되므로, 컴포넌트 내부에서 Data Fetch를 실행해도 무방
+  - 즉, data가 필요한 컴포넌트에서 직접 data fetch가 가능해졌고, next13의 app directory에서는 기본적으로 모든 컴포넌트가 RSC이기 때문에 더이상 getServerSideProps / getStaticProps는 불필요
+
+- Automatic Code Splitting
+
+  - 본래 code splitting을 하기 위해서는 React.Lazy나 dynamic import를 사용
+  - RSC에서 RCC를 import 하는 케이스에서는 자동적으로 RCC를 dynamic import 적용(서버에서 RSC가 렌더링될 때 RCC는 실행되지 않기 때문에 굳이 RCC를 즉시 import할 필요가 없음)
+
+- Progressive Rendering
+
+  - 서버는 직렬화한 결과물을 client에게 스트림의 형태로 전달
+  - 스크린의 모든 화면정보를 수신할 때까지 기다릴 필요 없이, 클라이언트는 먼저 수신된 부분부터 반영하기 시작하여 화면에 띄워줄 수 있음
+
+- 컴포넌트 단위 refetch
+  - 전통적인 SSR의 경우 완성된 html 파일을 내려주기 때문에 작은 변경사항이 발생하더라도 전체 페이지를 전부 새로 그려서 받아와야 했다.
+  - RSC는 직렬화된 스트림 형태로 데이터를 받아오고 클라이언트에서 스트림을 해석하여 vitualDOM을 형성 및 Reconciliation을 통해 뷰를 갱신하는 과정을 거치게 된다
+  - 즉, 변경사항이 있더라도 새로운 스크린으로 갈아끼우는 것이 아니라 기존 화면의 state등, context를 유지한채로 변경된 사항만 선택적으로 반영할 수 있음(next.js도 지금 그러지 않나?)
+
+## 단점도 고민해보면 좋을 것 같음
+
+## 참조
+
+- [Next 서버 컴포넌트(React Server Component)에 대한 고찰](https://velog.io/@2ast/React-%EC%84%9C%EB%B2%84-%EC%BB%B4%ED%8F%AC%EB%84%8C%ED%8A%B8React-Server-Component%EC%97%90-%EB%8C%80%ED%95%9C-%EA%B3%A0%EC%B0%B0)
+- [Next.js 공식 문서](https://nextjs.org/docs/app/building-your-application/rendering/server-components)
+- [React Server Components in Next.js 13](https://blog.logrocket.com/react-server-components-next-js-13/)
+- [How to Use Next.js 14’s Server Components Effectively](https://medium.com/@sassenthusiast/my-epiphany-with-next-js-14s-server-components-08f69a2c1414)
