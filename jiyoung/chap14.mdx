@@ -1,0 +1,155 @@
+---
+title: 14장 정리
+date: "2024/07/12"
+description: 웹사이트 보안을 위한 리액트와 웹페이지 보안 이슈
+---
+
+## 리액트에서 발생하는 크로스 사이트 스크립팅(Cross Site Scripting : XSS)
+
+- 리액트는 기본적으로 XSS 공격을 방어하기 위해 많은 보안 기능을 제공한다
+- 하지만, 사용자 입력을 받아서 렌더링을 할 때, 사용자가 입력한 값을 그대로 렌더링 할 경우에는 XSS 공격에 취약하다
+- 이를 방지하기 위해서는 사용자 입력을 받아서 렌더링을 할 때, 사용자가 입력한 값을 그대로 렌더링하지 않고, 특수문자를 이스케이프 처리를 해야 한다
+
+### dangerouslySetInnerHTML
+
+- 리액트에서 HTML을 렌더링 할 때 사용하는 속성
+- 오직 \_\_html 키를 가진 객체만 인수로 받을 수 있으며, 이 인수로 넘겨 받은 문자열을 DOM에 그대로 표시하는 역할이다.
+  - **인수로 받는 문자열에 제한이 없다는 것이 위험하다**
+- 넘겨주는 문자열 값은 한 번 더 검증을 거쳐야 한다
+
+### useRef를 활용한 직접 삽입
+
+- useRef를 사용하여 DOM에 직접 접근하여 값을 삽입하는 방법
+
+  ```jsx
+  const html = `<span><svg/onload=alert(origin)></span>`;
+
+  function App() {
+    const divRef = useRef(null);
+    useEffect(() => {
+      if (divRef.current) {
+        divRef.current.innerHTML = html;
+      }
+    });
+
+    return <div ref={divRef}></div>;
+  }
+  ```
+
+- useRef를 사용하여 DOM에 직접 접근하여 값을 삽입하므로 앞서 말한 비슷한 방식으로 XSS 공격이 가능하다
+
+### 리액트에서 XSS 문제를 피하는 방법
+
+- 제 3자가 삽입할 수 있는 HTML을 안전한 HTML 코드로 한 번 치환하는 것이다.
+- **_이러한 과정을 새니타이즈, 이스케이프라고 한다_**
+- 치환 과정은 되도록 서버에서 수행하는 것이 좋다.
+- POST 요청에 있는 HTML을 이스케이프 하는 것이 가장 안전하다.
+
+## `<a>`태그의 값에 적절한 제한을 둬야 한다.
+
+- `<a>` 태그의 href 속성에는 사용자가 입력한 값을 그대로 넣어주면 안된다.
+- href로 들어가는 값을 제한해야 한다.
+- 가능하다면 origin도 확인해 처리하는 것이 좋다.
+
+  ```jsx
+  function isSafeHref(href) {
+      let isSafe = false;
+      try {
+          // javascript: 가 오면 protocol이 javascript:가 된다.
+          const url = new URL(href);
+          if(['http:', 'https:'].includes(url.protocol)) {
+              isSafe = true;
+          }
+      } catch (error) {
+          isSafe = false;
+      }
+      return isSafe;
+  }
+
+  function App() {
+      const unsafeHref = 'javascript:alert('hello')';
+      const safeHref = 'https://www.google.com';
+      return (
+          <>
+              {/* 위험한 href로 분류되어 #이 반환 */}
+              <a href={isSafeHref(unsafeHref) ? unsafeHref : '#'}></a>
+              {/* 안전한 href로 분류되어 https://www.google.com이 반환 */}
+              <a href={isSafeHref(safeHref) ? safeHref : '#'}></a>
+          </>
+      )
+  }
+  ```
+
+## HTTP 보안 헤더 설정하기
+
+### strict-transport-security
+
+- HTTPS로만 접속하도록 강제하는 헤더
+- `Strict-Transport-Security: max-age=31536000; includeSubDomains; preload`
+  - _max-age_ : 브라우저가 이 헤더를 저장하는 시간
+  - _includeSubDomains_ : 모든 서브도메인에 대해서도 HTTPS로만 접속하도록 강제
+  - _preload_ : 브라우저에게 이 사이트가 HSTS를 사용한다고 알려줌
+
+### X-XSS-Protection
+
+- 브라우저의 XSS 필터를 활성화하는 헤더
+- `X-XSS-Protection: 1; mode=block`
+  - _1_ : XSS 필터를 활성화
+  - _mode=block_ : XSS 공격을 감지하면 페이지를 렌더링하지 않고 차단
+
+### X-Frames-Options
+
+- 페이지가 다른 페이지의 iframe으로 렌더링되는 것을 방지하는 헤더
+- `X-Frame-Options: DENY`
+  - _DENY_ : 다른 페이지의 iframe으로 렌더링되지 않음
+  - _SAMEORIGIN_ : 같은 도메인의 iframe으로 렌더링 가능
+
+### permissions-policy
+
+- 브라우저의 기능을 제한하는 헤더
+- `Permissions-Policy: geolocation=(), microphone=()`
+  - _geolocation=()_ : 위치 정보 사용을 허용하지 않음
+  - _microphone=()_ : 마이크 사용을 허용하지 않음
+  - _carmera=()_ : 카메라 사용을 허용하지 않음
+
+### X-Content-Type-Options
+
+- 브라우저가 MIME 타입을 잘못 설정한 리소스를 무시하도록 하는 헤더
+- `X-Content-Type-Options: nosniff`
+  - _nosniff_ : 브라우저가 MIME 타입을 잘못 설정한 리소스를 무시
+  - _sniif_ : 브라우저가 MIME 타입을 잘못 설정한 리소스를 무시하지 않음
+
+### Referrer-Policy
+
+- 다른 사이트로부터의 요청을 제한하는 헤더
+- `Referrer-Policy: no-referrer`
+  - _no-referrer_ : 요청을 보낼 때 referrer를 보내지 않음
+  - _no-referrer-when-downgrade_ : HTTPS -> HTTP로 이동할 때 referrer를 보내지 않음
+  - _same-origin_ : 같은 도메인으로만 referrer를 보냄
+  - _strict-origin_ : 같은 도메인으로만 referrer를 보내지만, HTTP -> HTTPS로 이동할 때는 referrer를 보내지 않음
+  - _origin_ : 같은 도메인으로만 referrer를 보냄
+  - _strict-origin-when-cross-origin_ : 같은 도메인으로만 referrer를 보내지만, 다른 도메인으로 이동할 때는 referrer를 보내지 않음
+  - _unsafe-url_ : 모든 요청에 대해 referrer를 보냄
+
+### Content-Security-Policy
+
+- 페이지에서 로드할 수 있는 리소스를 제한하는 헤더
+- `Content-Security-Policy: default-src 'self'`
+  - _default-src_ : 기본 리소스를 설정
+  - _self_ : 같은 도메인의 리소스만 로드 가능
+  - _none_ : 모든 리소스를 로드하지 않음
+  - _unsafe-inline_ : 인라인 스크립트를 허용
+  - _unsafe-eval_ : eval() 함수를 허용
+  - _strict-dynamic_ : 동적으로 생성된 스크립트를 허용
+  - `nonce-<nonce>` : nonce 값이 일치하는 스크립트를 허용
+  - `hash-<hash>` : 해시 값이 일치하는 스크립트를 허용
+  - `report-uri <uri>` : 보안 정책 위반 보고서를 보낼 주소
+  - `report-to <group>` : 보안 정책 위반 보고서를 보낼 그룹
+
+## 취약점이 있는 패키지의 사용을 피하자
+
+- [참고사이트](https://security.snyk.io/)
+
+## OWASP Top 10
+
+- [OWASP Top 10](https://owasp.org/www-project-top-ten/)
