@@ -1,0 +1,126 @@
+---
+title: 14장 정리
+date: '2024/06/27'
+description: 웹사이트 보안을 위한 리액트와 웹페이지 보안 이슈
+---
+
+## 리액트에서 발생하는 크로스 사이트 스크립팅(XSS)
+
+- 크로스 사이트 스크립팅이란 웹 애플리케이션에서 가장 많이 보이는 취약점 중 하나이다.
+- 개발자가 아닌 제3자가 웹사이트에 악성 스크립트를 삽입해 실행할 수 있는 취약점을 위미한다.
+
+```
+<p>사용자가 글을 작성했습니다.</p>
+<script>
+    alert('XSS')
+</script>
+
+위 글을 방문하면 alert도 동시에 실행될것이다.
+```
+
+그로인해 쿠키등을 획득해 로그인 세션 탈취등의 행위를 할수있다.
+
+### XSS 이슈는 어떻게 발생하나?
+
+- dangerouslySetinnerHTML prop
+
+  - html 키를 가진 객체만 인수로 받을수 있으며, 이 인수로 넘겨받은 문자열을 DOM에 그대로 표시하는역할을 한다.
+  - 문자열의 내용에 제한이 없기때문에 값을 alert(origin)등으로 할당하여 넘겨줄경우 화면에 그대로 나타날수있다.
+
+- useRef
+  - 위와 비슷한 방법으로 DOM에 직접 내용을 삽입할 수 있는 방법으로 useRef가 있다.
+  - innerHTML에 보안 취약점이 있는 스크립트를 삽입하면 동일한 문제가 발생한다.
+
+```jsx
+const html = `<span><svg/onload=alret(origin)></span>`;
+
+function App() {
+  const divRef = useRef < HTMLDivElement > null;
+
+  useEffect(() => {
+    if (divRef.current) {
+      divRef.current.innerHTML = html;
+    }
+  });
+
+  return <div ref={divRef} />;
+}
+```
+
+위 코드를 방문하면 origin이 alert로 나타나게된다.
+
+## 리액트에서 XSS 문제를 피하는 방법
+
+- HTML을 안전한 HTML코드로 한번 치환하기.
+- sanitize 혹은 escape라고함.
+- sanitize-html 이라는 라이브러리가 있음.
+
+- allowAttributes등 허용할 태그 목록을 일일히 나열하기 때문에 보안이슈로부터 조금 더 자유로워질 수 있다.
+- 또한 사용자에게 보여줄때 뿐만아니라 작성을 저장할때도 치환과정을 한번 거친 후 저장하는것이 좀 더 안전하다.
+- 이러한 작업은 서버에서 수행되는것이 script작성을 통해 바로 서버로 요청을 보내는 유저의 이상행동을 막기에 용이하다.
+
+- a태그에 입력될수있는 값을 제한하기
+- a태그 사용이 꼭 필요하지않은 상호작용 태그는 button태그를 사용하기.
+- 피싱사이트로 이동되는등의 이슈를 줄일수있다.
+
+- HTTPS 사용하기
+
+- X-Frame-Options
+
+  - frame, iframe, embed, object 내부에서 렌더링을 허용할지를 나타낼 수 있다.
+  - X-Frame-Options : DENY (위와 같은 프레임 관련 코드가 있다면 무조건 막는다.)
+  - X-Frame-Options : SAMEORIGIN (같은 origin에 대해서만 프레임을 허용한다.)
+
+- Permissions-Policy
+  - 웹사이트에서 사용할 수 있는 기능과 사용할 수 없는 기능을 명시적으로 선언하는 헤더다.
+  - 허용 (=\*) , 불허 (), 몇가지 페이지만 허용 ('https://a.yceffort.kr')
+
+```
+Permissions-Policy : geolocation=()
+
+사용 불가
+
+Permissions-Policy : geolocation=*
+
+사용 가능
+
+Permissions-Policy : geolocation=('https://a.yceffort.kr')
+
+해당 페이지에서만 사용가능
+```
+
+- Content-Security-Policy
+
+  - \*-src
+  - `Content-Security-Policy : font-src<source>`
+  - 위와같이 설정하면 source에 입력된 font source외에는 참조 할 수 없다.
+
+- 보안 헤더 설정하기
+  - next.config.js에서 설정할수있다.
+
+```jsx
+const securityHeaders = [{ key: 'key', value: 'value' }];
+
+module.export = {
+  async headers() {
+    return [
+      {
+        //모든 주소에 설정
+        source: '/:path*',
+        headers: securityHeaders,
+      },
+    ];
+  },
+};
+```
+
+위의 작업등을 실행 후 'https://securityheaders.com' 을 방문하는것도 좋은 방법이다.
+
+- 취약점이 있는 패키지의 사용을 피하기.
+- 'https:/security.synk.io/' 를 방문하면 현재 사용중인 패키지의 이름으로 검색하여 취약점을 확인 할 수 있다.
+
+- OWASP Top 10은 웹 애플리케이션에서 발생할 수 있는 주요 보안 취약점을 요약해주며, 어떻게 조치해야하는지도 소개해준다.
+주기적으로 확인하여 해당 차트에 랭크된 취약점이 자신의 웹사이트에 존재하지는 않는지 확인하여 수정해나갈 필요가 있다.
+
+### 보안문제로 인해 크고 작은 이슈가 발생하고있다.
+- 보안을 항상 신경쓰며 개발하고 주기적으로 보안사항을 업데이트하여 남의일이 나의일이 되지않도록 노력하자.
