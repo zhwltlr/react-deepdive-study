@@ -1,0 +1,84 @@
+---
+title: 14장 정리
+date: "2024/06/26"
+description: 웹사이트 보안을 위한 리액트와 웹페이지 보안 이슈
+---
+
+# 리액트에서 발생하는 크로스 사이트 스크립팅(XSS)
+
+- XSS
+
+  - 제 3자가 웹사이트에 악성 스크립트를 삽입해 발생할 수 있는 보안 취약점
+  - 쿠키를 획득해 사용자의 로그인 세션 등을 탈취하거나 사용자의 데이터를 임의로 변경하는 등 위험성이 생긴다.
+
+- dangerouslySetinnerHTML prop
+
+  - html에 특정 파트에 html을 설정할 수 있는 프로퍼티
+  - 리액트에서는 `dangerouslySetInnerHTML` prop을 사용하여 HTML을 렌더링할 수 있다. 이 prop을 사용하면 사용자가 **입력한 데이터를 그대로 출력**할 수 있기 때문에 XSS 공격에 취약하다.
+
+  ```jsx
+  const html = `<span>예시 HTML 입니다.</span>`;
+
+  function App() {
+    return <div dangerouslySetInnerHTML={{ __html: html }} />;
+  }
+
+  export default App;
+  ```
+
+- useRef를 활용한 직접 삽입
+
+  - `useRef`를 사용하여 직접 DOM에 접근하여 HTML을 삽입할 수 있다. 이 때도 사용자가 입력한 데이터를 그대로 출력하기 때문에 XSS 공격에 취약하다.
+
+  ```jsx
+  import { useEffect, useRef } from "react";
+
+  const html = `<span>예시 HTML 입니다.</span>`;
+
+  function App() {
+    const divRef = useRef < HTMLDivElement > null;
+
+    useEffect(() => {
+      if (divRef.current) {
+        divRef.current.innerHtml = html;
+      }
+    });
+
+    return <div ref={divRef} />;
+  }
+  ```
+
+- 리액트에서 XSS 문제를 피하는 방법
+
+  - sanitize(escape) : 제 3자가 삽입할 수 있는 HTML을 안전한 HTML로 한 번 정화하는 과정. 대표적인 라이브러리 중 sanitize-html가 있다.
+  - 리액트에서는 jsx bracket({})과 함께 사용할 시, 자동으로 이스케이프 된다.
+  - 단, 의도대로 실행되지 않으니 실행이 필요할 경우 sanitize 라이브러리와 함께 dangerousSetIneerHTML prop 사용을 고려해야한다.
+
+# getServerSideProps와 서버 컴포넌트를 주의하자
+
+- getServerSideProps와 서버 컴포넌트 사용 시 보안에 주의해야한다.
+- 최소한의 데이터만 props로 내려주어야 한다.(불필요하게 쿠키 전체를 넘기면 위험하다.)
+
+# \<a/> 태그의 값에 적절한 제한을 둬야 한다
+
+- \<a href="javascript:;"> 사용하지 않기
+- href에 사용자가 입력한 주소를 넣을 수 있다면 보안 이슈로 이어진다.
+- 버튼을 쓰는 것이 마크업 관점에서도 좋음
+
+# HTTP 보안 헤더 설정하기
+
+- Strict-Transport-Security (HSTS): HTTPS를 통해서만 접근하도록 강제하여 중간자 공격을 방지하는 헤더입
+- X-XSS-Protection: XSS 공격이 감지되면 페이지 로딩을 중단시키는 구형 브라우저용 헤더
+- X-Frame-Options: 웹 페이지를 프레임에 포함되지 않도록해서 클릭재킹 공격(공격자는 보통 투명하거나 불투명한 프레임을 사용하여 사용자가 보지 못하는 웹 요소를 클릭하게 만든다.)을 방지하는 헤더
+- Permissions-Policy: 웹 페이지에서 사용할 수 있는 기능(예: 지리 위치, 카메라 등)의 사용을 제어하는 헤더
+- X-Content-Type-Options: MIME 타입 스니핑을 방지하여 선언된 콘텐츠 타입 이외의 콘텐츠를 로드하지 않도록 하는 헤더
+- Referrer-Policy: 페이지 간 링크 클릭 시 전송되는 참조자 정보의 양을 제어하는 헤더
+- Content-Security-Policy (CSP): XSS와 데이터 주입 공격을 방지하기 위해 허용된 소스 목록을 설정하는 강력한 보안 헤더
+- 보안 헤더 설정하기: 웹 서버 설정 파일이나 애플리케이션의 코드에서 보안 헤더를 추가하여 설정할 수 있다.
+- 보안 헤더 확인하기: 브라우저의 개발자 도구에서 네트워크 탭을 확인하거나, 온라인 보안 헤더 검사 도구를 사용하여 설정된 보안 헤더를 확인할 수 있다.
+
+# 취약점이 있는 패키지의 사용을 피하자
+
+# OWASP Top 10
+
+- 주로 웹에서 발생할 수 있는 정보 노출, 악성 스크립트, 보안 취약점 등을 연구하며, 주기적으로 10대 웹 애플리케이션 취약점을 공개하는데 이를 OWASP Top 10이라고 한다.
